@@ -1,0 +1,34 @@
+{
+  "name": "raml-path-match",
+  "version": "0.0.0",
+  "description": "Path matching utility based on the RAML spec",
+  "main": "raml-path-match.js",
+  "scripts": {
+    "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mulesoft-labs/raml-path-match.git"
+  },
+  "keywords": [
+    "raml",
+    "path",
+    "route",
+    "params"
+  ],
+  "author": "MuleSoft, Inc.",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/mulesoft-labs/raml-path-match/issues"
+  },
+  "homepage": "https://github.com/mulesoft-labs/raml-path-match",
+  "devDependencies": {
+    "chai": "^1.9.1",
+    "istanbul": "^0.2.13",
+    "mocha": "^1.20.1"
+  },
+  "dependencies": {
+    "raml-sanitize": "0.0.3",
+    "raml-validate": "0.0.3"
+  }
+}
