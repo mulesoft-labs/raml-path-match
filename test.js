@@ -384,98 +384,6 @@ var TESTS = [
     }
   ],
   /**
-   * Repeated parameters.
-   */
-  [
-    '/{route}',
-    {
-      route: { type: 'string', repeat: true }
-    },
-    '/',
-    false
-  ],
-  [
-    '/{route}',
-    {
-      route: { type: 'string', repeat: true, required: false }
-    },
-    '/',
-    {
-      match: '/',
-      params: {
-        route: []
-      }
-    }
-  ],
-  [
-    '/{route}',
-    {
-      route: { type: 'string', repeat: true }
-    },
-    '/test',
-    {
-      match: '/test',
-      params: {
-        route: ['test']
-      }
-    }
-  ],
-  [
-    '/{route}',
-    {
-      route: { type: 'string', repeat: true }
-    },
-    '/test/route',
-    {
-      match: '/test/route',
-      params: {
-        route: ['test', 'route']
-      }
-    }
-  ],
-  [
-    '/{route}',
-    {
-      route: { type: 'string', repeat: true, enum: ['test'] }
-    },
-    '/test',
-    {
-      match: '/test',
-      params: {
-        route: ['test']
-      }
-    }
-  ],
-  [
-    '/{route}',
-    {
-      route: { type: 'string', repeat: true, enum: ['test'] }
-    },
-    '/test/something',
-    false
-  ],
-  [
-    '/{route}',
-    {
-      route: { type: 'integer', repeat: true }
-    },
-    '/abc/123',
-    false
-  ],
-  [
-    '/{route}',
-    {
-      route: { type: 'integer', repeat: true }
-    },
-    '/123/456',
-    {
-      match: '/123/456',
-      params: {
-        route: [123, 456]
-      }
-    }
-  ],
-  /**
    * Extension parameters.
    */
   [
@@ -488,66 +396,6 @@ var TESTS = [
       match: '/test.json',
       params: {
         route: 'json'
-      }
-    }
-  ],
-  [
-    '/test.{route}',
-    {
-      route: { type: 'string', repeat: true }
-    },
-    '/test.json.html',
-    {
-      match: '/test.json.html',
-      params: {
-        route: ['json', 'html']
-      }
-    }
-  ],
-  [
-    '/test.{route}',
-    {
-      route: { type: 'string', repeat: true, enum: ['json', 'html'] }
-    },
-    '/test.json.html',
-    {
-      match: '/test.json.html',
-      params: {
-        route: ['json', 'html']
-      }
-    }
-  ],
-  [
-    '/test.{route}',
-    {
-      route: { type: 'string', repeat: true, enum: ['json', 'html'] }
-    },
-    '/test.json.erb',
-    false
-  ],
-  [
-    '/test.{route}',
-    {
-      route: { type: 'integer', repeat: true }
-    },
-    '/test.1.2.3',
-    {
-      match: '/test.1.2.3',
-      params: {
-        route: [1, 2, 3]
-      }
-    }
-  ],
-  [
-    '/test.{route}',
-    {
-      route: { type: 'number', repeat: true }
-    },
-    '/test.1.2.3',
-    {
-      match: '/test.1.2.3',
-      params: {
-        route: [1, 2, 3]
       }
     }
   ],
@@ -578,34 +426,6 @@ var TESTS = [
       match: '/test',
       params: {
         route: 'test'
-      }
-    },
-    { end: false }
-  ],
-  [
-    '/{route}',
-    {
-      route: { type: 'string', repeat: true }
-    },
-    '/test/route',
-    {
-      match: '/test/route',
-      params: {
-        route: ['test', 'route']
-      }
-    },
-    { end: false }
-  ],
-  [
-    '/{route}',
-    {
-      route: { type: 'string', repeat: true, enum: ['test'] }
-    },
-    '/test',
-    {
-      match: '/test',
-      params: {
-        route: ['test']
       }
     },
     { end: false }
@@ -659,6 +479,22 @@ var TESTS = [
     false,
     { sensitive: true }
   ],
+  /**
+   * Decode URI parameters.
+   */
+  [
+    '/{route}',
+    {
+      route: { type: 'string' }
+    },
+    '/test%2Fexample',
+    {
+      match: '/test%2Fexample',
+      params: {
+        route: 'test/example'
+      }
+    }
+  ]
 ];
 
 describe('raml-path-match', function () {

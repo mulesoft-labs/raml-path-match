@@ -61,8 +61,8 @@ var toRegExp = function (route, params, keys, options) {
 
       // Push the current key into the keys array.
       keys.push({
-        name:      key,
-        delimiter: prefix || '/'
+        name:   key,
+        prefix: prefix || '/'
       });
 
       // Default the prefix to an empty string for simpler concatination.
@@ -73,7 +73,6 @@ var toRegExp = function (route, params, keys, options) {
       var param    = params[key] || {};
       var type     = param.type;
       var capture  = REGEXP_MATCH[type] || '[^' + (prefix || '\\/') + ']+';
-      var repeat   = param.repeat;
       var optional = param.required === false;
 
       // Allow support for enum values as the regexp match.
@@ -83,18 +82,8 @@ var toRegExp = function (route, params, keys, options) {
         }).join('|') + ')';
       }
 
-      // Allow repeated parameters.
-      if (repeat) {
-        capture = capture + '(?:' + prefix + capture + ')*';
-      }
-
-      // Allow the entire parameter to be optional.
-      if (optional) {
-        return '(?:' + prefix + '(' + capture + '))?';
-      }
-
       // Return the regexp as a matching group.
-      return prefix + '(' + capture + ')';
+      return prefix + '(' + capture + ')' + (optional ? '?' : '');
     }
   );
 
@@ -114,6 +103,22 @@ var toRegExp = function (route, params, keys, options) {
   }
 
   return new RegExp('^' + route + (end ? '$' : ''), flags);
+};
+
+/**
+ * Attempt to uri decode a parameter.
+ *
+ * @param  {String} param
+ * @return {String}
+ */
+var decodeParam = function (param) {
+  try {
+    return decodeURIComponent(param);
+  } catch (_) {
+    var err = new Error('Failed to decode param "' + param + '"');
+    err.status = 400;
+    throw err;
+  }
 };
 
 /**
@@ -163,13 +168,9 @@ module.exports = function (options) {
       // on the key name.
       for (var i = 1; i < matches.length; i++) {
         var key   = keys[i - 1];
-        var match = matches[i];
+        var param = matches[i];
 
-        params[key.name] = match;
-
-        if (schema[key.name] && schema[key.name].repeat) {
-          params[key.name] = match ? match.split(key.delimiter) : [];
-        }
+        params[key.name] = param == null ? param : decodeParam(param);
       }
 
       // Sanitize the parameters.

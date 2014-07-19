@@ -1,6 +1,6 @@
 # RAML Path Match
 
-Path matching utility based on the [RAML spec](https://github.com/raml-org/raml-spec/blob/master/raml-0.8.md#named-parameters).
+Path matching utility based on the [RAML spec](https://github.com/raml-org/raml-spec/blob/master/raml-0.8.md#template-uris-and-uri-parameters).
 
 ## Installation
 
@@ -44,13 +44,9 @@ pathMatch('/{route}', {
 }); //=> [Function]
 ```
 
-#### Repeated parameters
-
-Parameters can be repeated according to the [RAML spec](https://github.com/raml-org/raml-spec/blob/master/raml-0.8.md#repeat). When this option is set, the parameter is allowed to be repeated more than once. For example, `/{route}` will match `/123/456`. When the parameter can be repeated, the matched value will *always* be an array.
-
 #### Optional parameters
 
-Parameters can be optional according to the [RAML spec](https://github.com/raml-org/raml-spec/blob/master/raml-0.8.md#required). To set the parameter to be optional, you must set `required: false`. With this option set, `/{route}` will match just `/`. When the parameter is optional and not set, the match value will be set to `undefined`. If the parameter is also repeatable, it'll be set to an empty array.
+Parameters can be optional according to the [RAML spec](https://github.com/raml-org/raml-spec/blob/master/raml-0.8.md#required). To set the parameter to be optional, you must set `required: false`. With this option set, `/{route}` will match just `/`. When the parameter is optional and not matched, the parameter value will be set to `undefined`.
 
 ### Matching the path
 
