@@ -1,5 +1,9 @@
 # RAML Path Match
 
+[![NPM version][npm-image]][npm-url]
+[![Build status][travis-image]][travis-url]
+[![Test coverage][coveralls-image]][coveralls-url]
+
 Path matching utility based on the [RAML spec](https://github.com/raml-org/raml-spec/blob/master/raml-0.8.md#template-uris-and-uri-parameters).
 
 ## Installation
@@ -66,3 +70,10 @@ The above is an example of passing the path `/123` to the result of the previous
 ## License
 
 Apache 2.0
+
+[npm-image]: https://img.shields.io/npm/v/raml-path-match.svg?style=flat
+[npm-url]: https://npmjs.org/package/raml-path-match
+[travis-image]: https://img.shields.io/travis/mulesoft-labs/raml-path-match.svg?style=flat
+[travis-url]: https://travis-ci.org/mulesoft-labs/raml-path-match
+[coveralls-image]: https://img.shields.io/coveralls/mulesoft-labs/raml-path-match.svg?style=flat
+[coveralls-url]: https://coveralls.io/r/mulesoft-labs/raml-path-match?branch=master
