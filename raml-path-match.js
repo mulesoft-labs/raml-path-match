@@ -2,6 +2,11 @@ var ramlSanitize = require('raml-sanitize')();
 var ramlValidate = require('raml-validate')();
 
 /**
+ * Expose `ramlPathMatch`.
+ */
+module.exports = ramlPathMatch;
+
+/**
  * Map RAML types to basic regexp patterns.
  *
  * @type {Object}
@@ -35,13 +40,13 @@ var REGEXP_REPLACE = new RegExp([
 /**
  * Convert the route into a regexp using the passed in parameters.
  *
- * @param  {String} route
+ * @param  {String} path
  * @param  {Object} params
  * @param  {Array}  keys
  * @param  {Object} options
  * @return {RegExp}
  */
-function toRegExp (route, params, keys, options) {
+function toRegExp (path, params, keys, options) {
   var end    = options.end !== false;
   var strict = options.strict;
   var flags  = '';
@@ -51,8 +56,8 @@ function toRegExp (route, params, keys, options) {
     flags += 'i';
   }
 
-  // Replace route parameters and transform into a regexp.
-  route = route.replace(
+  // Replace path parameters and transform into a regexp.
+  var route = path.replace(
     REGEXP_REPLACE,
     function (match, prefix, key, escape) {
       if (escape) {
@@ -87,19 +92,22 @@ function toRegExp (route, params, keys, options) {
     }
   );
 
-  if (route[route.length - 1] !== '/') {
-    // If we are doing a non-ending match, we need to prompt the matching
-    // groups to match as much as possible. To do this, we add a positive
-    // lookahead for the next path fragment or the end. However, if the regexp
-    // already ends in a path fragment, we'll run into problems.
-    if (!end) {
-      route += '(?=\\/|$)';
-    }
+  var endsWithSlash = path.charAt(path.length - 1) === '/';
 
-    // Allow trailing slashes to be matched in non-strict, ending mode.
-    if (end && !strict) {
-      route += '\\/?';
-    }
+  // In non-strict mode we allow a slash at the end of match. If the path to
+  // match already ends with a slash, we remove it for consistency. The slash
+  // is valid at the end of a path match, not in the middle. This is important
+  // in non-ending mode, where "/test/" shouldn't match "/test//route".
+  if (!strict) {
+    route = (endsWithSlash ? route.slice(0, -2) : route) + '(?:\\/(?=$))?';
+  }
+
+  if (end) {
+    route += '$';
+  } else {
+    // In non-ending mode, we need the capturing groups to match as much as
+    // possible by using a positive lookahead to the end or next path segment.
+    route += strict && endsWithSlash ? '' : '(?=\\/|$)';
   }
 
   return new RegExp('^' + route + (end ? '$' : ''), flags);
@@ -124,16 +132,16 @@ function decodeParam (param) {
 /**
  * Generate the match function based on a route and RAML params object.
  *
- * @param  {String}   route
+ * @param  {String}   path
  * @param  {Object}   schema
  * @param  {Object}   options
  * @return {Function}
  */
-module.exports = function (route, schema, options) {
+function ramlPathMatch (path, schema, options) {
   options = options || {};
 
   // Fast slash support.
-  if (route === '/' && options.end === false) {
+  if (path === '/' && options.end === false) {
     return truth;
   }
 
@@ -141,7 +149,7 @@ module.exports = function (route, schema, options) {
   schema = schema || {};
 
   var keys     = [];
-  var re       = toRegExp(route, schema, keys, options);
+  var re       = toRegExp(path, schema, keys, options);
   var sanitize = ramlSanitize(schema);
   var validate = ramlValidate(schema);
 
@@ -153,18 +161,14 @@ module.exports = function (route, schema, options) {
    */
   return function (pathname) {
     var m = re.exec(pathname);
-    var path = m[0];
 
-    // Return `false` when the match failed.
     if (!m) {
       return false;
     }
 
-    // Convert the matches into a parameters object.
+    var path = m[0];
     var params = {};
 
-    // Iterate over each of the matches and put them the params object based
-    // on the key name.
     for (var i = 1; i < m.length; i++) {
       var key   = keys[i - 1];
       var param = m[i];
@@ -172,7 +176,6 @@ module.exports = function (route, schema, options) {
       params[key.name] = param == null ? param : decodeParam(param);
     }
 
-    // Sanitize the parameters.
     params = sanitize(params);
 
     // If the parameters fail validation, return `false`.
@@ -180,14 +183,18 @@ module.exports = function (route, schema, options) {
       return false;
     }
 
-    // Return the match object.
     return {
       path: path,
       params: params
     };
   };
-};
+}
 
+/**
+ * Always match this path.
+ *
+ * @return {Object}
+ */
 function truth () {
-  return { path: '' };
+  return { path: '', params: {} };
 }

@@ -16,7 +16,7 @@ var TESTS = [
     '/',
     null,
     '/',
-    { match: '/', params: {} }
+    { path: '/', params: {} }
   ],
   [
     '/',
@@ -28,7 +28,7 @@ var TESTS = [
     '/route',
     null,
     '/route',
-    { match: '/route', params: {} }
+    { path: '/route', params: {} }
   ],
   [
     '/route',
@@ -43,7 +43,7 @@ var TESTS = [
     '/{route}',
     {},
     '/test',
-    { match: '/test', params: {} }
+    { path: '/test', params: {} }
   ],
   [
     '/{route}',
@@ -61,7 +61,7 @@ var TESTS = [
     },
     '/test',
     {
-      match: '/test',
+      path: '/test',
       params: {
         route: 'test'
       }
@@ -98,7 +98,7 @@ var TESTS = [
     },
     '/123',
     {
-      match: '/123',
+      path: '/123',
       params: {
         route: '123'
       }
@@ -119,7 +119,7 @@ var TESTS = [
     },
     '/something',
     {
-      match: '/something',
+      path: '/something',
       params: {
         route: 'something'
       }
@@ -132,7 +132,7 @@ var TESTS = [
     },
     '/test',
     {
-      match: '/test',
+      path: '/test',
       params: {
         route: 'test'
       }
@@ -161,7 +161,7 @@ var TESTS = [
     },
     '/test',
     {
-      match: '/test',
+      path: '/test',
       params: {
         route: 'test'
       }
@@ -177,7 +177,7 @@ var TESTS = [
     },
     '/123',
     {
-      match: '/123',
+      path: '/123',
       params: {
         route: 123
       }
@@ -190,7 +190,7 @@ var TESTS = [
     },
     '/123.5',
     {
-      match: '/123.5',
+      path: '/123.5',
       params: {
         route: 123.5
       }
@@ -219,7 +219,7 @@ var TESTS = [
     },
     '/6',
     {
-      match: '/6',
+      path: '/6',
       params: {
         route: 6
       }
@@ -240,7 +240,7 @@ var TESTS = [
     },
     '/-3',
     {
-      match: '/-3',
+      path: '/-3',
       params: {
         route: -3
       }
@@ -256,7 +256,7 @@ var TESTS = [
     },
     '/-3',
     {
-      match: '/-3',
+      path: '/-3',
       params: {
         route: -3
       }
@@ -269,7 +269,7 @@ var TESTS = [
     },
     '/10',
     {
-      match: '/10',
+      path: '/10',
       params: {
         route: 10
       }
@@ -298,7 +298,7 @@ var TESTS = [
     },
     '/10',
     {
-      match: '/10',
+      path: '/10',
       params: {
         route: 10
       }
@@ -311,7 +311,7 @@ var TESTS = [
     },
     '/1',
     {
-      match: '/1',
+      path: '/1',
       params: {
         route: 1
       }
@@ -327,7 +327,7 @@ var TESTS = [
     },
     '/true',
     {
-      match: '/true',
+      path: '/true',
       params: {
         route: true
       }
@@ -340,7 +340,7 @@ var TESTS = [
     },
     '/false',
     {
-      match: '/false',
+      path: '/false',
       params: {
         route: false
       }
@@ -364,7 +364,7 @@ var TESTS = [
     },
     '/test',
     {
-      match: '/test',
+      path: '/test',
       params: {
         route: 'test'
       }
@@ -377,7 +377,7 @@ var TESTS = [
     },
     '/',
     {
-      match: '/',
+      path: '/',
       params: {
         route: undefined
       }
@@ -393,7 +393,7 @@ var TESTS = [
     },
     '/test.json',
     {
-      match: '/test.json',
+      path: '/test.json',
       params: {
         route: 'json'
       }
@@ -409,7 +409,7 @@ var TESTS = [
     },
     '/test',
     {
-      match: '/test',
+      path: '/test',
       params: {
         route: 'test'
       }
@@ -423,7 +423,7 @@ var TESTS = [
     },
     '/test/route',
     {
-      match: '/test',
+      path: '/test',
       params: {
         route: 'test'
       }
@@ -440,7 +440,7 @@ var TESTS = [
     },
     '/test123',
     {
-      match: '/test123',
+      path: '/test123',
       params: {
         route: 123
       }
@@ -453,7 +453,7 @@ var TESTS = [
     },
     '/testabc',
     {
-      match: '/testabc',
+      path: '/testabc',
       params: {
         route: 'abc'
       }
@@ -467,7 +467,7 @@ var TESTS = [
     {},
     '/test',
     {
-      match: '/test',
+      path: '/test',
       params: {}
     },
     { sensitive: true }
@@ -489,7 +489,7 @@ var TESTS = [
     },
     '/test%2Fexample',
     {
-      match: '/test%2Fexample',
+      path: '/test%2Fexample',
       params: {
         route: 'test/example'
       }
@@ -524,7 +524,7 @@ describe('raml-path-match', function () {
 
       // Run the test.
       it(description.join(' '), function () {
-        var test   = pathMatch(options)(route, params);
+        var test   = pathMatch(route, params, options);
         var result = test(path);
 
         expect(result).to.deep.equal(match);
