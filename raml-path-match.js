@@ -148,16 +148,17 @@ module.exports = function (options) {
     var validate = ramlValidate(schema);
 
     /**
-     * Finally returns a static, reusable function for matching paths.
+     * Return a static, reusable function for matching paths.
      *
-     * @param  {String}           path
+     * @param  {String}           pathname
      * @return {(Object|Boolean)}
      */
-    return function (path) {
-      var matches = re.exec(path);
+    return function (pathname) {
+      var m = re.exec(pathname);
+      var path = m[0];
 
       // Return `false` when the match failed.
-      if (!matches) {
+      if (!m) {
         return false;
       }
 
@@ -166,9 +167,9 @@ module.exports = function (options) {
 
       // Iterate over each of the matches and put them the params object based
       // on the key name.
-      for (var i = 1; i < matches.length; i++) {
+      for (var i = 1; i < m.length; i++) {
         var key   = keys[i - 1];
-        var param = matches[i];
+        var param = m[i];
 
         params[key.name] = param == null ? param : decodeParam(param);
       }
@@ -183,7 +184,7 @@ module.exports = function (options) {
 
       // Return the match object.
       return {
-        match:  matches[0],
+        path: path,
         params: params
       };
     };
