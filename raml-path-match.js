@@ -41,7 +41,7 @@ var REGEXP_REPLACE = new RegExp([
  * @param  {Object} options
  * @return {RegExp}
  */
-var toRegExp = function (route, params, keys, options) {
+function toRegExp (route, params, keys, options) {
   var end    = options.end !== false;
   var strict = options.strict;
   var flags  = '';
@@ -103,7 +103,7 @@ var toRegExp = function (route, params, keys, options) {
   }
 
   return new RegExp('^' + route + (end ? '$' : ''), flags);
-};
+}
 
 /**
  * Attempt to uri decode a parameter.
@@ -111,7 +111,7 @@ var toRegExp = function (route, params, keys, options) {
  * @param  {String} param
  * @return {String}
  */
-var decodeParam = function (param) {
+function decodeParam (param) {
   try {
     return decodeURIComponent(param);
   } catch (_) {
@@ -119,74 +119,75 @@ var decodeParam = function (param) {
     err.status = 400;
     throw err;
   }
-};
+}
 
 /**
- * Match RAML paths in a reusable fashion. This function is purely for
- * initializing the path match instance with an options object.
+ * Generate the match function based on a route and RAML params object.
  *
+ * @param  {String}   route
+ * @param  {Object}   schema
  * @param  {Object}   options
  * @return {Function}
  */
-module.exports = function (options) {
+module.exports = function (route, schema, options) {
   options = options || {};
 
+  // Fast slash support.
+  if (route === '/' && options.end === false) {
+    return truth;
+  }
+
+  // Fallback to providing the schema object when undefined.
+  schema = schema || {};
+
+  var keys     = [];
+  var re       = toRegExp(route, schema, keys, options);
+  var sanitize = ramlSanitize(schema);
+  var validate = ramlValidate(schema);
+
   /**
-   * Generate the match function based on a route and RAML params object.
+   * Return a static, reusable function for matching paths.
    *
-   * @param  {String}   route
-   * @param  {Object}   schema
-   * @return {Function}
+   * @param  {String}           pathname
+   * @return {(Object|Boolean)}
    */
-  return function (route, schema) {
-    // Fallback to providing the schema object when undefined.
-    schema = schema || {};
+  return function (pathname) {
+    var m = re.exec(pathname);
+    var path = m[0];
 
-    var keys     = [];
-    var re       = toRegExp(route, schema, keys, options);
-    var sanitize = ramlSanitize(schema);
-    var validate = ramlValidate(schema);
+    // Return `false` when the match failed.
+    if (!m) {
+      return false;
+    }
 
-    /**
-     * Return a static, reusable function for matching paths.
-     *
-     * @param  {String}           pathname
-     * @return {(Object|Boolean)}
-     */
-    return function (pathname) {
-      var m = re.exec(pathname);
-      var path = m[0];
+    // Convert the matches into a parameters object.
+    var params = {};
 
-      // Return `false` when the match failed.
-      if (!m) {
-        return false;
-      }
+    // Iterate over each of the matches and put them the params object based
+    // on the key name.
+    for (var i = 1; i < m.length; i++) {
+      var key   = keys[i - 1];
+      var param = m[i];
 
-      // Convert the matches into a parameters object.
-      var params = {};
+      params[key.name] = param == null ? param : decodeParam(param);
+    }
 
-      // Iterate over each of the matches and put them the params object based
-      // on the key name.
-      for (var i = 1; i < m.length; i++) {
-        var key   = keys[i - 1];
-        var param = m[i];
+    // Sanitize the parameters.
+    params = sanitize(params);
 
-        params[key.name] = param == null ? param : decodeParam(param);
-      }
+    // If the parameters fail validation, return `false`.
+    if (!validate(params).valid) {
+      return false;
+    }
 
-      // Sanitize the parameters.
-      params = sanitize(params);
-
-      // If the parameters fail validation, return `false`.
-      if (!validate(params).valid) {
-        return false;
-      }
-
-      // Return the match object.
-      return {
-        path: path,
-        params: params
-      };
+    // Return the match object.
+    return {
+      path: path,
+      params: params
     };
   };
 };
+
+function truth () {
+  return { path: '' };
+}
