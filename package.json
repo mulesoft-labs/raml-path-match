@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Path matching utility based on the RAML spec",
   "main": "raml-path-match.js",
+  "files": [
+    "raml-path-match.js",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
