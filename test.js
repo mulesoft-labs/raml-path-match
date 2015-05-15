@@ -491,7 +491,7 @@ var TESTS = [
     {
       path: '/test%2Fexample',
       params: {
-        route: 'test/example'
+        route: 'test%2Fexample'
       }
     }
   ]

@@ -114,22 +114,6 @@ function toRegExp (path, params, keys, options) {
 }
 
 /**
- * Attempt to uri decode a parameter.
- *
- * @param  {String} param
- * @return {String}
- */
-function decodeParam (param) {
-  try {
-    return decodeURIComponent(param);
-  } catch (_) {
-    var err = new Error('Failed to decode param "' + param + '"');
-    err.status = 400;
-    throw err;
-  }
-}
-
-/**
  * Generate the match function based on a route and RAML params object.
  *
  * @param  {String}   path
@@ -170,10 +154,8 @@ function ramlPathMatch (path, schema, options) {
     var params = {};
 
     for (var i = 1; i < m.length; i++) {
-      var key   = keys[i - 1];
-      var param = m[i];
-
-      params[key.name] = param == null ? param : decodeParam(param);
+      var key = keys[i - 1];
+      params[key.name] = m[i];
     }
 
     params = sanitize(params);
