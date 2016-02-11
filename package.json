@@ -27,9 +27,9 @@
   },
   "homepage": "https://github.com/mulesoft-labs/raml-path-match",
   "devDependencies": {
-    "chai": "^1.9.1",
-    "istanbul": "^0.3.0",
-    "mocha": "^1.20.1"
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.2",
+    "mocha": "^2.4.5"
   },
   "dependencies": {
     "raml-sanitize": "^1.0.0",
