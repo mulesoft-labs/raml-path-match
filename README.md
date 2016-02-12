@@ -67,6 +67,10 @@ The path matching instance will return a function after you give it the route te
 
 The above is an example of passing the path `/123` to the result of the previous example. Notice that parameters will be automatically sanitized to the native JavaScript types.
 
+### Immutable Updates
+
+You can merge more parameters into the path after creation using `pathMatch.update(params)`. It'll return a new function, or reuse the current function if there's no functional difference with the new parameters.
+
 ## License
 
 Apache 2.0

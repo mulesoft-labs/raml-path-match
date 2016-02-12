@@ -545,4 +545,21 @@ describe('raml-path-match', function () {
       });
     });
   });
+
+  it('should update path matchers immutably', function () {
+    var pathMatch1 = pathMatch('/{slug}');
+    var pathMatch2 = pathMatch1.update({ slug: { enum: ['valid'] } });
+    var pathMatch3 = pathMatch2.update({ random: { type: 'number' } });
+
+    expect(pathMatch1).to.not.equal(pathMatch2);
+    expect(pathMatch2).to.equal(pathMatch3);
+
+    var match1 = pathMatch1('/test');
+    var match2 = pathMatch2('/invalid');
+    var match3 = pathMatch2('/valid');
+
+    expect(match1).to.deep.equal({ path: '/test', params: { slug: 'test' } });
+    expect(match2).to.equal(false);
+    expect(match3).to.deep.equal({ path: '/valid', params: { slug: 'valid' } });
+  });
 });

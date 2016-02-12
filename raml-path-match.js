@@ -1,3 +1,4 @@
+var extend = require('xtend');
 var ramlSanitize = require('raml-sanitize')();
 var ramlValidate = require('raml-validate')();
 
@@ -76,7 +77,7 @@ function toRegExp (path, params, keys, options) {
 
       // Use the param type and if it doesn't exist, fallback to matching
       // the entire segment.
-      var param    = params[key] || { type: 'string', required: true };
+      var param    = extend({ type: 'string', required: true }, params[key]);
       var type     = param.type;
       var capture  = REGEXP_MATCH[type] || '[^' + (prefix || '\\/') + ']+';
       var optional = param.required === false;
@@ -115,7 +116,7 @@ function toRegExp (path, params, keys, options) {
   }
 
   return {
-    regexp: new RegExp('^' + route + (end ? '$' : ''), flags),
+    regexp: new RegExp('^' + route, flags),
     params: used
   };
 }
@@ -150,7 +151,7 @@ function ramlPathMatch (path, schema, options) {
    * @param  {String}           pathname
    * @return {(Object|Boolean)}
    */
-  return function (pathname) {
+  function pathMatch (pathname) {
     var m = result.regexp.exec(pathname);
 
     if (!m) {
@@ -176,7 +177,37 @@ function ramlPathMatch (path, schema, options) {
       path: path,
       params: params
     };
+  }
+
+  pathMatch.update = function update (schema) {
+    // Check a diff of the old to the new schema.
+    if (schema) {
+      var paramsKeys = Object.keys(result.params);
+
+      for (var i = 0; i < paramsKeys.length; i++) {
+        var key = paramsKeys[i];
+        var param = schema[key];
+
+        if (param == null) {
+          continue;
+        }
+
+        var paramKeys = Object.keys(param);
+
+        for (var j = 0; j < paramKeys.length; j++) {
+          var paramKey = paramKeys[i];
+
+          if (result.params[key][paramKey] !== schema[key][paramKey]) {
+            return ramlPathMatch(path, extend(result.params, schema), options);
+          }
+        }
+      }
+    }
+
+    return pathMatch;
   };
+
+  return pathMatch;
 }
 
 /**
