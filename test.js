@@ -43,7 +43,7 @@ var TESTS = [
     '/{route}',
     {},
     '/test',
-    { path: '/test', params: {} }
+    { path: '/test', params: { route: 'test' } }
   ],
   [
     '/{route}',
@@ -493,6 +493,20 @@ var TESTS = [
       params: {
         route: 'test%2Fexample'
       }
+    }
+  ],
+  /**
+   * Ignore unused params.
+   */
+  [
+    '/path',
+    {
+      random: { type: 'string', required: true }
+    },
+    '/path',
+    {
+      path: '/path',
+      params: {}
     }
   ]
 ];

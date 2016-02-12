@@ -50,6 +50,7 @@ function toRegExp (path, params, keys, options) {
   var end    = options.end !== false;
   var strict = options.strict;
   var flags  = '';
+  var used   = {};
 
   // Allow case insensitivity.
   if (!options.sensitive) {
@@ -75,10 +76,13 @@ function toRegExp (path, params, keys, options) {
 
       // Use the param type and if it doesn't exist, fallback to matching
       // the entire segment.
-      var param    = params[key] || {};
+      var param    = params[key] || { type: 'string', required: true };
       var type     = param.type;
       var capture  = REGEXP_MATCH[type] || '[^' + (prefix || '\\/') + ']+';
       var optional = param.required === false;
+
+      // Cache used parameters.
+      used[key] = param;
 
       // Allow support for enum values as the regexp match.
       if (Array.isArray(param.enum)) {
@@ -110,7 +114,10 @@ function toRegExp (path, params, keys, options) {
     route += strict && endsWithSlash ? '' : '(?=\\/|$)';
   }
 
-  return new RegExp('^' + route + (end ? '$' : ''), flags);
+  return {
+    regexp: new RegExp('^' + route + (end ? '$' : ''), flags),
+    params: used
+  };
 }
 
 /**
@@ -133,9 +140,9 @@ function ramlPathMatch (path, schema, options) {
   schema = schema || {};
 
   var keys     = [];
-  var re       = toRegExp(path, schema, keys, options);
-  var sanitize = ramlSanitize(schema);
-  var validate = ramlValidate(schema);
+  var result   = toRegExp(path, schema, keys, options);
+  var sanitize = ramlSanitize(result.params);
+  var validate = ramlValidate(result.params);
 
   /**
    * Return a static, reusable function for matching paths.
@@ -144,7 +151,7 @@ function ramlPathMatch (path, schema, options) {
    * @return {(Object|Boolean)}
    */
   return function (pathname) {
-    var m = re.exec(pathname);
+    var m = result.regexp.exec(pathname);
 
     if (!m) {
       return false;
