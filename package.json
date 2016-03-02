@@ -1,6 +1,6 @@
 {
   "name": "raml-path-match",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "description": "Path matching utility based on the RAML spec",
   "main": "raml-path-match.js",
   "files": [
