@@ -1,3 +1,5 @@
+/* global describe, it */
+
 var expect    = require('chai').expect;
 var util      = require('util');
 var pathMatch = require('./');
@@ -507,6 +509,31 @@ var TESTS = [
     {
       path: '/path',
       params: {}
+    }
+  ],
+  /**
+   * Encoded keys.
+   */
+  [
+    '/{a%7Eb}',
+    {
+      'a~b': { type: 'number', required: true }
+    },
+    '/abc',
+    false
+  ],
+  /**
+   * Path expansion.
+   */
+  [
+    '/{+file}',
+    {},
+    '/path/to/file',
+    {
+      path: '/path/to/file',
+      params: {
+        file: 'path/to/file'
+      }
     }
   ]
 ];

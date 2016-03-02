@@ -33,10 +33,10 @@ var ESCAPE_CHARACTERS = /([.*+?=^!:${}()|[\]\/\\])/g;
  */
 var REGEXP_REPLACE = new RegExp([
   // Match RAML parameters with an optional prefix.
-  '([.\\/])?\\{([^}]+)\\}',
+  '([\\.\\/])?\\{(\\+)?((?:[\\w]|%[0-9abcde]{2})(?:[\\w\\.]|%[0-9abcde]{2})*)\\}',
   // Match any escape characters.
   ESCAPE_CHARACTERS.source
-].join('|'), 'g');
+].join('|'), 'ig');
 
 /**
  * Convert the route into a regexp using the passed in parameters.
@@ -61,14 +61,17 @@ function toRegExp (path, params, keys, options) {
   // Replace path parameters and transform into a regexp.
   var route = path.replace(
     REGEXP_REPLACE,
-    function (match, prefix, key, escape) {
+    function (match, prefix, modifier, key, escape) {
       if (escape) {
         return '\\' + escape;
       }
 
+      // Decode URI parameters in variable name.
+      var name = decodeURIComponent(key);
+
       // Push the current key into the keys array.
       keys.push({
-        name:   key,
+        name:   name,
         prefix: prefix || '/'
       });
 
@@ -77,13 +80,14 @@ function toRegExp (path, params, keys, options) {
 
       // Use the param type and if it doesn't exist, fallback to matching
       // the entire segment.
-      var param    = extend({ type: 'string', required: true }, params[key]);
+      var expanded = modifier === '+';
+      var param    = extend({ type: 'string', required: true }, params[name]);
       var type     = param.type;
-      var capture  = REGEXP_MATCH[type] || '[^' + (prefix || '\\/') + ']+';
+      var capture  = REGEXP_MATCH[type] || (expanded ? '.*?' : '[^' + (prefix || '\\/') + ']+');
       var optional = param.required === false;
 
       // Cache used parameters.
-      used[key] = param;
+      used[name] = param;
 
       // Allow support for enum values as the regexp match.
       if (Array.isArray(param.enum)) {
