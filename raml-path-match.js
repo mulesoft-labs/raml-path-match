@@ -147,7 +147,7 @@ function ramlPathMatch (path, schema, options) {
   var keys = []
   var result = toRegExp(path, schema, keys, options)
   var sanitize = ramlSanitize(result.params)
-  var validate = ramlValidate(result.params)
+  var validate = ramlValidate(result.params, options.RAMLVersion)
 
   /**
    * Return a static, reusable function for matching paths.
