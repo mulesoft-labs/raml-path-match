@@ -4,7 +4,7 @@
 [![Build status][travis-image]][travis-url]
 [![Test coverage][coveralls-image]][coveralls-url]
 
-Path matching utility based on the [RAML spec](https://github.com/raml-org/raml-spec/blob/master/raml-0.8.md#template-uris-and-uri-parameters).
+Path matching utility based on the [RAML spec](https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md#template-uris-and-uri-parameters).
 
 ## Installation
 
@@ -30,6 +30,7 @@ match('/test'); //=> { match: '/test', params: { route: 'test' } }
 * **end** - When set to `false`, the route will only match the beginning of paths.
 * **strict** - When set to `true`, the route must match exactly without trailing slash.
 * **sensitive** - When set to `true`, the route will be case-sensitive.
+* **RAMLVersion** - The RAML version passed to [raml-validate](https://github.com/mulesoft/node-raml-validate) (default: `'RAML10'`)
 
 ### Routes
 

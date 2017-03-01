@@ -1,8 +1,8 @@
 /* global describe, it */
 
-var expect    = require('chai').expect;
-var util      = require('util');
-var pathMatch = require('./');
+var expect = require('chai').expect
+var util = require('util')
+var pathMatch = require('./')
 
 /**
  * An array of tests to execute. The tests come in the format:
@@ -536,7 +536,7 @@ var TESTS = [
       }
     }
   ]
-];
+]
 
 describe('raml-path-match', function () {
   /**
@@ -544,11 +544,11 @@ describe('raml-path-match', function () {
    */
   describe('functional tests', function () {
     TESTS.forEach(function (test) {
-      var route   = test[0];
-      var params  = test[1];
-      var path    = test[2];
-      var match   = test[3];
-      var options = test[4];
+      var route = test[0]
+      var params = test[1]
+      var path = test[2]
+      var match = test[3]
+      var options = test[4]
 
       // Dynamically build the test description.
       var description = [
@@ -556,37 +556,37 @@ describe('raml-path-match', function () {
         (match ? 'should' : 'should not'),
         'match',
         util.inspect(path)
-      ];
+      ]
 
       // Push the options definition onto the description.
       if (options) {
-        description.push('with options', util.inspect(options));
+        description.push('with options', util.inspect(options))
       }
 
       // Run the test.
       it(description.join(' '), function () {
-        var test   = pathMatch(route, params, options);
-        var result = test(path);
+        var test = pathMatch(route, params, options)
+        var result = test(path)
 
-        expect(result).to.deep.equal(match);
-      });
-    });
-  });
+        expect(result).to.deep.equal(match)
+      })
+    })
+  })
 
   it('should update path matchers immutably', function () {
-    var pathMatch1 = pathMatch('/{slug}');
-    var pathMatch2 = pathMatch1.update({ slug: { enum: ['valid'] } });
-    var pathMatch3 = pathMatch2.update({ random: { type: 'number' } });
+    var pathMatch1 = pathMatch('/{slug}')
+    var pathMatch2 = pathMatch1.update({ slug: { enum: ['valid'] } })
+    var pathMatch3 = pathMatch2.update({ random: { type: 'number' } })
 
-    expect(pathMatch1).to.not.equal(pathMatch2);
-    expect(pathMatch2).to.equal(pathMatch3);
+    expect(pathMatch1).to.not.equal(pathMatch2)
+    expect(pathMatch2).to.equal(pathMatch3)
 
-    var match1 = pathMatch1('/test');
-    var match2 = pathMatch2('/invalid');
-    var match3 = pathMatch2('/valid');
+    var match1 = pathMatch1('/test')
+    var match2 = pathMatch2('/invalid')
+    var match3 = pathMatch2('/valid')
 
-    expect(match1).to.deep.equal({ path: '/test', params: { slug: 'test' } });
-    expect(match2).to.equal(false);
-    expect(match3).to.deep.equal({ path: '/valid', params: { slug: 'valid' } });
-  });
-});
+    expect(match1).to.deep.equal({ path: '/test', params: { slug: 'test' } })
+    expect(match2).to.equal(false)
+    expect(match3).to.deep.equal({ path: '/valid', params: { slug: 'valid' } })
+  })
+})

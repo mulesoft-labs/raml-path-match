@@ -1,6 +1,6 @@
 {
   "name": "raml-path-match",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Path matching utility based on the RAML spec",
   "main": "raml-path-match.js",
   "files": [
@@ -8,8 +8,10 @@
     "LICENSE"
   ],
   "scripts": {
-    "test-spec": "mocha -R spec",
-    "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
+    "lint": "standard",
+    "test-spec": "mocha -R spec --bail",
+    "test-cov": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec --bail",
+    "test": "npm run lint && npm run test-cov"
   },
   "repository": {
     "type": "git",
@@ -29,12 +31,13 @@
   "homepage": "https://github.com/mulesoft-labs/raml-path-match",
   "devDependencies": {
     "chai": "^3.5.0",
-    "istanbul": "^0.4.2",
-    "mocha": "^2.4.5"
+    "istanbul": "^0.4.5",
+    "mocha": "^3.1.0",
+    "standard": "^8.3.0"
   },
   "dependencies": {
-    "raml-sanitize": "^1.0.0",
-    "raml-validate": "^1.0.0",
+    "raml-sanitize": "jstoiko/node-raml-sanitize#raml1.0",
+    "raml-validate": "jstoiko/node-raml-validate#raml1.0",
     "xtend": "^4.0.1"
   }
 }
