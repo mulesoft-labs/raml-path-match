@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "raml-sanitize": "^1.2.0",
-    "raml-validate": "^1.1.1",
+    "raml-validate": "mulesoft-labs/node-raml-validate#raml1.0-fixes",
     "xtend": "^4.0.1"
   }
 }
