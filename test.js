@@ -1,8 +1,8 @@
 /* global describe, it */
 
-var expect = require('chai').expect
-var util = require('util')
-var pathMatch = require('./')
+const expect = require('chai').expect
+const util = require('util')
+const pathMatch = require('./')
 
 /**
  * An array of tests to execute. The tests come in the format:
@@ -10,7 +10,7 @@ var pathMatch = require('./')
  *
  * @type {Array}
  */
-var TESTS = [
+const TESTS = [
   /**
    * Basic tests.
    */
@@ -544,14 +544,14 @@ describe('raml-path-match', function () {
    */
   describe('functional tests', function () {
     TESTS.forEach(function (test) {
-      var route = test[0]
-      var params = test[1]
-      var path = test[2]
-      var match = test[3]
-      var options = test[4]
+      const route = test[0]
+      const params = test[1]
+      const path = test[2]
+      const match = test[3]
+      const options = test[4]
 
       // Dynamically build the test description.
-      var description = [
+      const description = [
         util.inspect(route),
         (match ? 'should' : 'should not'),
         'match',
@@ -565,8 +565,8 @@ describe('raml-path-match', function () {
 
       // Run the test.
       it(description.join(' '), function () {
-        var test = pathMatch(route, params, options)
-        var result = test(path)
+        const test = pathMatch(route, params, options)
+        const result = test(path)
 
         expect(result).to.deep.equal(match)
       })
@@ -574,16 +574,16 @@ describe('raml-path-match', function () {
   })
 
   it('should update path matchers immutably', function () {
-    var pathMatch1 = pathMatch('/{slug}')
-    var pathMatch2 = pathMatch1.update({ slug: { enum: ['valid'] } })
-    var pathMatch3 = pathMatch2.update({ random: { type: 'number' } })
+    const pathMatch1 = pathMatch('/{slug}')
+    const pathMatch2 = pathMatch1.update({ slug: { enum: ['valid'] } })
+    const pathMatch3 = pathMatch2.update({ random: { type: 'number' } })
 
     expect(pathMatch1).to.not.equal(pathMatch2)
     expect(pathMatch2).to.equal(pathMatch3)
 
-    var match1 = pathMatch1('/test')
-    var match2 = pathMatch2('/invalid')
-    var match3 = pathMatch2('/valid')
+    const match1 = pathMatch1('/test')
+    const match2 = pathMatch2('/invalid')
+    const match3 = pathMatch2('/valid')
 
     expect(match1).to.deep.equal({ path: '/test', params: { slug: 'test' } })
     expect(match2).to.equal(false)

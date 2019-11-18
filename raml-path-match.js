@@ -1,6 +1,6 @@
-var extend = require('xtend')
-var ramlSanitize = require('raml-sanitize')()
-var ramlValidate = require('raml-validate')()
+const extend = require('xtend')
+const ramlSanitize = require('raml-sanitize')()
+const ramlValidate = require('raml-validate')()
 
 /**
  * Expose `ramlPathMatch`.
@@ -12,7 +12,7 @@ module.exports = ramlPathMatch
  *
  * @type {Object}
  */
-var REGEXP_MATCH = {
+const REGEXP_MATCH = {
   number: '[-+]?\\d+(?:\\.\\d+)?',
   integer: '[-+]?\\d+',
   date: '(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \\d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \\d{4} (?:[0-1]\\d|2[0-3]):[0-5]\\d:[0-5]\\d GMT',
@@ -24,14 +24,14 @@ var REGEXP_MATCH = {
  *
  * @type {RegExp}
  */
-var ESCAPE_CHARACTERS = /([.*+?=^!:${}()|[\]/\\])/g
+const ESCAPE_CHARACTERS = /([.*+?=^!:${}()|[\]/\\])/g
 
 /**
  * Static regexp for replacing parameters.
  *
  * @type {RegExp}
  */
-var REGEXP_REPLACE = new RegExp([
+const REGEXP_REPLACE = new RegExp([
   // Match RAML parameters with an optional prefix.
   '([\\.\\/])?\\{(\\+)?((?:[\\w]|%[0-9abcde]{2})(?:[\\w\\.]|%[0-9abcde]{2})*)\\}',
   // Match any escape characters.
@@ -42,16 +42,16 @@ var REGEXP_REPLACE = new RegExp([
  * Convert the route into a regexp using the passed in parameters.
  *
  * @param  {String} path
- * @param  {Object} params
+ * @param  {Object<String:webapi-parser.Parameter>}   paramsMap
  * @param  {Array}  keys
  * @param  {Object} options
  * @return {RegExp}
  */
-function toRegExp (path, params, keys, options) {
-  var end = options.end !== false
-  var strict = options.strict
-  var flags = ''
-  var used = {}
+function toRegExp (path, paramsMap, keys, options) {
+  const end = options.end !== false
+  const strict = options.strict
+  let flags = ''
+  const used = {}
 
   // Allow case insensitivity.
   if (!options.sensitive) {
@@ -59,7 +59,7 @@ function toRegExp (path, params, keys, options) {
   }
 
   // Replace path parameters and transform into a regexp.
-  var route = path.replace(
+  let route = path.replace(
     REGEXP_REPLACE,
     function (match, prefix, modifier, key, escape) {
       if (escape) {
@@ -67,7 +67,7 @@ function toRegExp (path, params, keys, options) {
       }
 
       // Decode URI parameters in variable name.
-      var name = decodeURIComponent(key)
+      const name = decodeURIComponent(key)
 
       // Push the current key into the keys array.
       keys.push({
@@ -80,11 +80,12 @@ function toRegExp (path, params, keys, options) {
 
       // Use the param type and if it doesn't exist, fallback to matching
       // the entire segment.
-      var expanded = modifier === '+'
-      var param = extend({ type: 'string', required: true }, params[name])
-      var type = param.type
-      var capture = REGEXP_MATCH[type] || (expanded ? '.*?' : '[^' + (prefix || '\\/') + ']+')
-      var optional = param.required === false
+      const expanded = modifier === '+'
+      // 2 STOPPED HERE >
+      const param = extend({ type: 'string', required: true }, paramsMap[name])
+      const type = param.type
+      let capture = REGEXP_MATCH[type] || (expanded ? '.*?' : '[^' + (prefix || '\\/') + ']+')
+      const optional = param.required === false
 
       // Cache used parameters.
       used[name] = param
@@ -101,7 +102,7 @@ function toRegExp (path, params, keys, options) {
     }
   )
 
-  var endsWithSlash = path.charAt(path.length - 1) === '/'
+  const endsWithSlash = path.charAt(path.length - 1) === '/'
 
   // In non-strict mode we allow a slash at the end of match. If the path to
   // match already ends with a slash, we remove it for consistency. The slash
@@ -129,11 +130,12 @@ function toRegExp (path, params, keys, options) {
  * Generate the match function based on a route and RAML params object.
  *
  * @param  {String}   path
- * @param  {Object}   schema
+ * @param  {Array<webapi-parser.Parameter>}   params
  * @param  {Object}   options
  * @return {Function}
  */
-function ramlPathMatch (path, schema, options) {
+function ramlPathMatch (path, params=[], options={}) {
+// function ramlPathMatch (path, schema, options) {
   options = options || {}
 
   // Fast slash support.
@@ -141,13 +143,13 @@ function ramlPathMatch (path, schema, options) {
     return truth
   }
 
-  // Fallback to providing the schema object when undefined.
-  schema = schema || {}
-
-  var keys = []
-  var result = toRegExp(path, schema, keys, options)
-  var sanitize = ramlSanitize(result.params)
-  var validate = ramlValidate(result.params, options.RAMLVersion)
+  const paramsMap = Object.fromEntries(
+    params.map(p => [p.name.value(), p]))
+  const keys = []
+  // 1 DIVED HERE --v
+  const result = toRegExp(path, paramsMap, keys, options)
+  const sanitize = ramlSanitize(result.params)
+  const validate = ramlValidate(result.params, options.RAMLVersion)
 
   /**
    * Return a static, reusable function for matching paths.
@@ -156,17 +158,17 @@ function ramlPathMatch (path, schema, options) {
    * @return {(Object|Boolean)}
    */
   function pathMatch (pathname) {
-    var m = result.regexp.exec(pathname)
+    const m = result.regexp.exec(pathname)
 
     if (!m) {
       return false
     }
 
-    var path = m[0]
-    var params = {}
+    const path = m[0]
+    let params = {}
 
-    for (var i = 1; i < m.length; i++) {
-      var key = keys[i - 1]
+    for (let i = 1; i < m.length; i++) {
+      const key = keys[i - 1]
       params[key.name] = m[i]
     }
 
@@ -183,32 +185,18 @@ function ramlPathMatch (path, schema, options) {
     }
   }
 
-  pathMatch.update = function update (schema) {
-    // Check a diff of the old to the new schema.
-    if (schema) {
-      var paramsKeys = Object.keys(result.params)
-
-      for (var i = 0; i < paramsKeys.length; i++) {
-        var key = paramsKeys[i]
-        var param = schema[key]
-
-        if (param == null) {
-          continue
-        }
-
-        var paramKeys = Object.keys(param)
-
-        for (var j = 0; j < paramKeys.length; j++) {
-          var paramKey = paramKeys[i]
-
-          if (result.params[key][paramKey] !== schema[key][paramKey]) {
-            return ramlPathMatch(path, extend(result.params, schema), options)
-          }
-        }
-      }
+  /**
+   * Adds more params to match path against.
+   * Leaves only params with unique names.
+   *
+   * @param  {Array<webapi-parser.Parameter>}   moreParams
+   */
+  pathMatch.update = function update (moreParams) {
+    const moreParamsMap = {
+      ...paramsMap,
+      ...Object.fromEntries(moreParams.map(p => [p.name.value(), p]))
     }
-
-    return pathMatch
+    return ramlPathMatch(path, Object.values(moreParamsMap), options)
   }
 
   return pathMatch
