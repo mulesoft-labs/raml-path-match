@@ -81,28 +81,29 @@ function toRegExp (path, paramsMap, keys, options) {
       // Use the param type and if it doesn't exist, fallback to matching
       // the entire segment.
       const expanded = modifier === '+'
-      // 2 STOPPED HERE >
-      const param = extend({ type: 'string', required: true }, paramsMap[name])
-      const type = param.type
-      let capture = REGEXP_MATCH[type] || (expanded ? '.*?' : '[^' + (prefix || '\\/') + ']+')
-      const optional = param.required === false
+      const paramConfig = extractParamConfig(paramsMap[name])
+      const param = extend({ type: 'string', required: true }, paramConfig)
+      let capture = (
+        REGEXP_MATCH[param.type] ||
+        (expanded ? '.*?' : '[^' + (prefix || '\\/') + ']+'))
 
       // Cache used parameters.
       used[name] = param
 
       // Allow support for enum values as the regexp match.
       if (Array.isArray(param.enum)) {
-        capture = '(?:' + param.enum.map(function (value) {
+        capture = '(?:' + param.enum.map(value => {
           return String(value).replace(ESCAPE_CHARACTERS, '\\$1')
         }).join('|') + ')'
       }
 
       // Return the regexp as a matching group.
-      return prefix + '(' + capture + ')' + (optional ? '?' : '')
+      return prefix + '(' + capture + ')' +
+        (param.required === false ? '?' : '')
     }
   )
 
-  const endsWithSlash = path.charAt(path.length - 1) === '/'
+  const endsWithSlash = path.endsWith('/')
 
   // In non-strict mode we allow a slash at the end of match. If the path to
   // match already ends with a slash, we remove it for consistency. The slash
@@ -134,7 +135,7 @@ function toRegExp (path, paramsMap, keys, options) {
  * @param  {Object}   options
  * @return {Function}
  */
-function ramlPathMatch (path, params=[], options={}) {
+function ramlPathMatch (path, params = [], options = {}) {
 // function ramlPathMatch (path, schema, options) {
   options = options || {}
 
@@ -146,9 +147,9 @@ function ramlPathMatch (path, params=[], options={}) {
   const paramsMap = Object.fromEntries(
     params.map(p => [p.name.value(), p]))
   const keys = []
-  // 1 DIVED HERE --v
   const result = toRegExp(path, paramsMap, keys, options)
-  const sanitize = ramlSanitize(result.params)
+  const sanitize = ramlSanitize(Object.values(result.params))
+  // 1 DIVED HERE --v
   const validate = ramlValidate(result.params, options.RAMLVersion)
 
   /**
@@ -209,4 +210,44 @@ function ramlPathMatch (path, params=[], options={}) {
  */
 function truth () {
   return { path: '', params: {} }
+}
+
+function extractParamConfig (param) {
+  if (!param) {
+    return {}
+  }
+  const shape = param.schema
+  const conf = {
+    type: getShapeType(shape),
+    required: param.required.value() || false
+  }
+  if (shape.values && shape.values.length > 0) {
+    conf.enum = shape.values.map(val => val.value.value())
+  }
+  return conf
+}
+
+/**
+ * Returns a one-word string representing a shape type.
+ *
+ * @param  {webapi-parser.AnyShape} shape
+ * @return  {string|Array<string>}
+ */
+function getShapeType (shape) {
+  // ScalarShape
+  if (shape.dataType !== undefined) {
+    return shape.dataType.value().split('#').pop()
+  }
+  // UnionShape
+  if (shape.anyOf !== undefined) {
+    return shape.anyOf.map(getShapeType)
+  }
+  // ArrayShape
+  if (shape.items !== undefined) {
+    return 'array'
+  }
+  // NodeShape
+  if (shape.properties !== undefined) {
+    return 'object'
+  }
 }
