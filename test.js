@@ -1,4 +1,4 @@
-/* global describe, it */
+/* global describe, it, before */
 
 const expect = require('chai').expect
 const util = require('util')
@@ -6,10 +6,21 @@ const pathMatch = require('./')
 const wp = require('webapi-parser')
 const domain = wp.model.domain
 
-function asParam (shape) {
+const TYPES = {
+  string: 'http://www.w3.org/2001/XMLSchema#string',
+  number: 'http://a.ml/vocabularies/shapes#number',
+  integer: 'http://www.w3.org/2001/XMLSchema#integer',
+  boolean: 'http://www.w3.org/2001/XMLSchema#boolean',
+  date: 'http://www.w3.org/2001/XMLSchema#date',
+  dateTime: 'http://www.w3.org/2001/XMLSchema#dateTime',
+  dateTimeOnly: 'http://a.ml/vocabularies/shapes#dateTimeOnly'
+}
+
+function asParam (shape, required = true, name = 'route') {
   return new domain.Parameter()
-    .withName('param')
+    .withName(name)
     .withSchema(shape)
+    .withRequired(required)
 }
 
 /**
@@ -51,13 +62,13 @@ const TESTS = [
    */
   [
     '/{route}',
-    {},
+    [],
     '/test',
     { path: '/test', params: { route: 'test' } }
   ],
   [
     '/{route}',
-    {},
+    [],
     '/',
     false
   ],
@@ -66,9 +77,7 @@ const TESTS = [
    */
   [
     '/{route}',
-    {
-      route: { type: 'string' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.string)),
     '/test',
     {
       path: '/test',
@@ -79,33 +88,29 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'string' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.string)),
     '/',
     false
   ],
   [
     '/{route}',
-    {
-      route: { type: 'string' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.string)),
     '/test/something',
     false
   ],
   [
     '/{route}',
-    {
-      route: { type: 'string', pattern: '\\d+' }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.string)
+      .withPattern('\\d+')),
     '/test',
     false
   ],
   [
     '/{route}',
-    {
-      route: { type: 'string', pattern: '\\d+' }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.string)
+      .withPattern('\\d+')),
     '/123',
     {
       path: '/123',
@@ -116,17 +121,17 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'string', minLength: 5 }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.string)
+      .withMinLength(5)),
     '/test',
     false
   ],
   [
     '/{route}',
-    {
-      route: { type: 'string', minLength: 5 }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.string)
+      .withMinLength(5)),
     '/something',
     {
       path: '/something',
@@ -137,9 +142,9 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'string', maxLength: 5 }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.string)
+      .withMaxLength(5)),
     '/test',
     {
       path: '/test',
@@ -150,25 +155,29 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'string', maxLength: 5 }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.string)
+      .withMaxLength(5)),
     '/something',
     false
   ],
   [
     '/{route}',
-    {
-      route: { type: 'string', enum: ['test'] }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.string)
+      .withValues([
+        new domain.ScalarNode('test', 'string')
+      ])),
     '/something',
     false
   ],
   [
     '/{route}',
-    {
-      route: { type: 'string', enum: ['test'] }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.string)
+      .withValues([
+        new domain.ScalarNode('test', 'string')
+      ])),
     '/test',
     {
       path: '/test',
@@ -182,9 +191,7 @@ const TESTS = [
    */
   [
     '/{route}',
-    {
-      route: { type: 'number' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.number)),
     '/123',
     {
       path: '/123',
@@ -195,9 +202,7 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'number' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.number)),
     '/123.5',
     {
       path: '/123.5',
@@ -208,25 +213,23 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'number' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.number)),
     '/test',
     false
   ],
   [
     '/{route}',
-    {
-      route: { type: 'number', minimum: 5 }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.number)
+      .withMinimum(5)),
     '/1',
     false
   ],
   [
     '/{route}',
-    {
-      route: { type: 'number', minimum: 5 }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.number)
+      .withMinimum(5)),
     '/6',
     {
       path: '/6',
@@ -237,17 +240,17 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'number', maximum: 5 }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.number)
+      .withMaximum(5)),
     '/6',
     false
   ],
   [
     '/{route}',
-    {
-      route: { type: 'number', maximum: 5 }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.number)
+      .withMaximum(5)),
     '/-3',
     {
       path: '/-3',
@@ -261,9 +264,7 @@ const TESTS = [
    */
   [
     '/{route}',
-    {
-      route: { type: 'integer' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.integer)),
     '/-3',
     {
       path: '/-3',
@@ -274,9 +275,7 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'integer' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.integer)),
     '/10',
     {
       path: '/10',
@@ -287,25 +286,21 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'integer' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.integer)),
     '/10.5',
     false
   ],
   [
     '/{route}',
-    {
-      route: { type: 'integer' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.integer)),
     '/abc',
     false
   ],
   [
     '/{route}',
-    {
-      route: { type: 'integer', minimum: 5 }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.integer)
+      .withMinimum(5)),
     '/10',
     {
       path: '/10',
@@ -316,9 +311,9 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'integer', maximum: 5 }
-    },
+    asParam(new domain.ScalarShape().withName('route')
+      .withDataType(TYPES.integer)
+      .withMaximum(5)),
     '/1',
     {
       path: '/1',
@@ -332,9 +327,7 @@ const TESTS = [
    */
   [
     '/{route}',
-    {
-      route: { type: 'boolean' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.boolean)),
     '/true',
     {
       path: '/true',
@@ -345,9 +338,7 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'boolean' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.boolean)),
     '/false',
     {
       path: '/false',
@@ -358,9 +349,7 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'boolean' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.boolean)),
     '/test',
     false
   ],
@@ -369,9 +358,9 @@ const TESTS = [
    */
   [
     '/{route}',
-    {
-      route: { type: 'string', required: false }
-    },
+    asParam(
+      new domain.ScalarShape().withName('route').withDataType(TYPES.string),
+      false),
     '/test',
     {
       path: '/test',
@@ -382,9 +371,9 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'string', required: false }
-    },
+    asParam(
+      new domain.ScalarShape().withName('route').withDataType(TYPES.string),
+      false),
     '/',
     {
       path: '/',
@@ -398,9 +387,7 @@ const TESTS = [
    */
   [
     '/test.{route}',
-    {
-      route: { type: 'string' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.string)),
     '/test.json',
     {
       path: '/test.json',
@@ -414,9 +401,7 @@ const TESTS = [
    */
   [
     '/{route}',
-    {
-      route: { type: 'string' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.string)),
     '/test',
     {
       path: '/test',
@@ -428,9 +413,7 @@ const TESTS = [
   ],
   [
     '/{route}',
-    {
-      route: { type: 'string' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.string)),
     '/test/route',
     {
       path: '/test',
@@ -445,9 +428,7 @@ const TESTS = [
    */
   [
     '/test{route}',
-    {
-      route: { type: 'integer' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.integer)),
     '/test123',
     {
       path: '/test123',
@@ -458,9 +439,7 @@ const TESTS = [
   ],
   [
     '/test{route}',
-    {
-      route: { type: 'string' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.string)),
     '/testabc',
     {
       path: '/testabc',
@@ -474,7 +453,7 @@ const TESTS = [
    */
   [
     '/test',
-    {},
+    [],
     '/test',
     {
       path: '/test',
@@ -484,7 +463,7 @@ const TESTS = [
   ],
   [
     '/test',
-    {},
+    [],
     '/TEST',
     false,
     { sensitive: true }
@@ -494,9 +473,7 @@ const TESTS = [
    */
   [
     '/{route}',
-    {
-      route: { type: 'string' }
-    },
+    asParam(new domain.ScalarShape().withName('route').withDataType(TYPES.string)),
     '/test%2Fexample',
     {
       path: '/test%2Fexample',
@@ -510,9 +487,9 @@ const TESTS = [
    */
   [
     '/path',
-    {
-      random: { type: 'string', required: true }
-    },
+    asParam(
+      new domain.ScalarShape().withName('random').withDataType(TYPES.string),
+      true, 'random'),
     '/path',
     {
       path: '/path',
@@ -524,9 +501,9 @@ const TESTS = [
    */
   [
     '/{a%7Eb}',
-    {
-      'a~b': { type: 'number', required: true }
-    },
+    asParam(
+      new domain.ScalarShape().withName('a~b').withDataType(TYPES.number),
+      true, 'a~b'),
     '/abc',
     false
   ],
@@ -535,7 +512,7 @@ const TESTS = [
    */
   [
     '/{+file}',
-    {},
+    [],
     '/path/to/file',
     {
       path: '/path/to/file',
