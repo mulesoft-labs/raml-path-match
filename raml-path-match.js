@@ -80,7 +80,7 @@ function toRegExp (path, paramsMap, keys, options) {
       // Use the param type and if it doesn't exist, fallback to matching
       // the entire segment.
       const expanded = modifier === '+'
-      const paramConfig = extractParamConfig(paramsMap[name])
+      const paramConfig = extractBasicParamConfig(paramsMap[name])
       const param = extend({ type: 'string', required: true }, paramConfig)
       let capture = (
         REGEXP_MATCH[param.type] ||
@@ -147,7 +147,8 @@ function ramlPathMatch (path, params = [], options = {}) {
     params.map(p => [p.name.value(), p]))
   const keys = []
   const result = toRegExp(path, paramsMap, keys, options)
-  const sanitize = ramlSanitize(Object.values(result.params))
+  const usedParams = params.filter(p => !!result.params[p.name.value()])
+  const sanitize = ramlSanitize(usedParams)
 
   /**
    * Return a static, reusable function for matching paths.
@@ -163,17 +164,20 @@ function ramlPathMatch (path, params = [], options = {}) {
     }
 
     const path = match[0]
-    const params = {}
+    let params = {}
 
     for (let i = 1; i < match.length; i++) {
       const key = keys[i - 1]
       params[key.name] = match[i]
     }
 
+    params = sanitize(params)
+
     // If the parameters fail validation, return `false`.
-    const promises = Object.entries(params).map(([name, val]) => {
-      return paramsMap[name].validate(val)
-        .then(report => report.conforms)
+    const promises = usedParams.forEach(paramEl => {
+      let val = params[paramEl.name.value()]
+      val = typeof val === 'string' ? val : JSON.stringify(val)
+      return paramEl.validate(val).then(report => report.conforms)
     })
     const reports = await Promise.all(promises)
     if (reports.includes(false)) {
@@ -182,7 +186,7 @@ function ramlPathMatch (path, params = [], options = {}) {
 
     return {
       path: path,
-      params: sanitize(params)
+      params: params
     }
   }
 
@@ -218,42 +222,19 @@ function truth () {
  * @param  {webapi-parser.Parameter} param
  * @return {Object}
  */
-function extractParamConfig (param) {
+function extractBasicParamConfig (param) {
   if (!param) {
     return {}
   }
   const shape = param.schema
   const conf = {
-    type: getShapeType(shape),
     required: param.required.value() || false
+  }
+  if (shape.dataType !== undefined) {
+    conf.type = shape.dataType.value().split('#').pop()
   }
   if (shape.values && shape.values.length > 0) {
     conf.enum = shape.values.map(val => val.value.value())
   }
   return conf
-}
-
-/**
- * Returns a one-word string representing a shape type.
- *
- * @param  {webapi-parser.AnyShape} shape
- * @return  {string|Array<string>}
- */
-function getShapeType (shape) {
-  // ScalarShape
-  if (shape.dataType !== undefined) {
-    return shape.dataType.value().split('#').pop()
-  }
-  // UnionShape
-  if (shape.anyOf !== undefined) {
-    return shape.anyOf.map(getShapeType)
-  }
-  // ArrayShape
-  if (shape.items !== undefined) {
-    return 'array'
-  }
-  // NodeShape
-  if (shape.properties !== undefined) {
-    return 'object'
-  }
 }
