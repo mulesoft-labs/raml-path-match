@@ -1,6 +1,5 @@
 const extend = require('xtend')
 const ramlSanitize = require('raml-sanitize')()
-const ramlValidate = require('raml-validate')()
 
 /**
  * Expose `ramlPathMatch`.
@@ -149,8 +148,6 @@ function ramlPathMatch (path, params = [], options = {}) {
   const keys = []
   const result = toRegExp(path, paramsMap, keys, options)
   const sanitize = ramlSanitize(Object.values(result.params))
-  // 1 DIVED HERE --v
-  const validate = ramlValidate(result.params, options.RAMLVersion)
 
   /**
    * Return a static, reusable function for matching paths.
@@ -158,31 +155,34 @@ function ramlPathMatch (path, params = [], options = {}) {
    * @param  {String}           pathname
    * @return {(Object|Boolean)}
    */
-  function pathMatch (pathname) {
-    const m = result.regexp.exec(pathname)
+  async function pathMatch (pathname) {
+    const match = result.regexp.exec(pathname)
 
-    if (!m) {
+    if (!match) {
       return false
     }
 
-    const path = m[0]
-    let params = {}
+    const path = match[0]
+    const params = {}
 
-    for (let i = 1; i < m.length; i++) {
+    for (let i = 1; i < match.length; i++) {
       const key = keys[i - 1]
-      params[key.name] = m[i]
+      params[key.name] = match[i]
     }
 
-    params = sanitize(params)
-
     // If the parameters fail validation, return `false`.
-    if (!validate(params).valid) {
+    const promises = Object.entries(params).map(([name, val]) => {
+      return paramsMap[name].validate(val)
+        .then(report => report.conforms)
+    })
+    const reports = await Promise.all(promises)
+    if (reports.includes(false)) {
       return false
     }
 
     return {
       path: path,
-      params: params
+      params: sanitize(params)
     }
   }
 
@@ -212,6 +212,12 @@ function truth () {
   return { path: '', params: {} }
 }
 
+/**
+ * Extracts necessary config from Parameter.
+ *
+ * @param  {webapi-parser.Parameter} param
+ * @return {Object}
+ */
 function extractParamConfig (param) {
   if (!param) {
     return {}

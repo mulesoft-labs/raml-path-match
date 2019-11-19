@@ -3,6 +3,14 @@
 const expect = require('chai').expect
 const util = require('util')
 const pathMatch = require('./')
+const wp = require('webapi-parser')
+const domain = wp.model.domain
+
+function asParam (shape) {
+  return new domain.Parameter()
+    .withName('param')
+    .withSchema(shape)
+}
 
 /**
  * An array of tests to execute. The tests come in the format:
@@ -539,6 +547,9 @@ const TESTS = [
 ]
 
 describe('raml-path-match', function () {
+  before(async function () {
+    await wp.WebApiParser.init()
+  })
   /**
    * Generate and run the test suite from an array of tests.
    */
