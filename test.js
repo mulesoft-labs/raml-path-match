@@ -531,13 +531,7 @@ describe('raml-path-match', function () {
    * Generate and run the test suite from an array of tests.
    */
   describe('functional tests', function () {
-    TESTS.forEach(function (test) {
-      const route = test[0]
-      const params = test[1]
-      const path = test[2]
-      const match = test[3]
-      const options = test[4]
-
+    TESTS.forEach(([route, params, path, match, options]) => {
       // Dynamically build the test description.
       const description = [
         util.inspect(route),
@@ -552,26 +546,27 @@ describe('raml-path-match', function () {
       }
 
       // Run the test.
-      it(description.join(' '), function () {
+      it(description.join(' '), async function () {
         const test = pathMatch(route, params, options)
         const result = test(path)
-
         expect(result).to.deep.equal(match)
       })
     })
   })
 
-  it('should update path matchers immutably', function () {
+  it('should update path matchers immutably', async function () {
     const pathMatch1 = pathMatch('/{slug}')
-    const pathMatch2 = pathMatch1.update({ slug: { enum: ['valid'] } })
-    const pathMatch3 = pathMatch2.update({ random: { type: 'number' } })
+    const pathMatch2 = pathMatch1.update([
+      asParam(
+        new domain.ScalarShape().withName('slug')
+          .withDataType(TYPES.string)
+          .withValues([new domain.ScalarNode('valid', 'string')]),
+        true, 'slug')
+    ])
 
-    expect(pathMatch1).to.not.equal(pathMatch2)
-    expect(pathMatch2).to.equal(pathMatch3)
-
-    const match1 = pathMatch1('/test')
-    const match2 = pathMatch2('/invalid')
-    const match3 = pathMatch2('/valid')
+    const match1 = await pathMatch1('/test')
+    const match2 = await pathMatch2('/invalid')
+    const match3 = await pathMatch2('/valid')
 
     expect(match1).to.deep.equal({ path: '/test', params: { slug: 'test' } })
     expect(match2).to.equal(false)

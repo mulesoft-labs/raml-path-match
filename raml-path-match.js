@@ -1,6 +1,7 @@
 const extend = require('xtend')
 const ramlSanitize = require('raml-sanitize')()
 
+
 /**
  * Expose `ramlPathMatch`.
  */
@@ -80,6 +81,15 @@ function toRegExp (path, paramsMap, keys, options) {
       // Use the param type and if it doesn't exist, fallback to matching
       // the entire segment.
       const expanded = modifier === '+'
+      /*
+
+        TODO:
+          1.Create default param of { type: 'string', required: true }
+            when param is not passed.
+          2. Collect Params instead of Objects in result.used
+
+
+      */
       const paramConfig = extractBasicParamConfig(paramsMap[name])
       const param = extend({ type: 'string', required: true }, paramConfig)
       let capture = (
@@ -170,14 +180,14 @@ function ramlPathMatch (path, params = [], options = {}) {
       const key = keys[i - 1]
       params[key.name] = match[i]
     }
-
     params = sanitize(params)
 
     // If the parameters fail validation, return `false`.
-    const promises = usedParams.forEach(paramEl => {
+    const promises = usedParams.map(paramEl => {
       let val = params[paramEl.name.value()]
+      console.log('>>>', paramEl.name.value(), params)
       val = typeof val === 'string' ? val : JSON.stringify(val)
-      return paramEl.validate(val).then(report => report.conforms)
+      return paramEl.schema.validate(val).then(report => report.conforms)
     })
     const reports = await Promise.all(promises)
     if (reports.includes(false)) {
@@ -229,6 +239,9 @@ function extractBasicParamConfig (param) {
   const shape = param.schema
   const conf = {
     required: param.required.value() || false
+  }
+  if (conf.required === undefined) {
+    conf.required = true
   }
   if (shape.dataType !== undefined) {
     conf.type = shape.dataType.value().split('#').pop()
