@@ -143,8 +143,10 @@ function ramlPathMatch (path, params, options = {}) {
 
   params = params || []
 
-  const paramsMap = Object.fromEntries(
-    params.map(p => [p.name.value(), p]))
+  const paramsMap = {}
+  params.forEach(param => {
+    paramsMap[param.name.value()] = param
+  })
   const keys = []
   const result = toRegExp(path, paramsMap, keys, options)
   const sanitize = ramlSanitize(Object.values(result.params))
@@ -197,9 +199,11 @@ function ramlPathMatch (path, params, options = {}) {
    */
   pathMatch.update = function update (moreParams) {
     const moreParamsMap = {
-      ...paramsMap,
-      ...Object.fromEntries(moreParams.map(p => [p.name.value(), p]))
+      ...paramsMap
     }
+    moreParams.forEach(param => {
+      moreParamsMap[param.name.value()] = param
+    })
     return ramlPathMatch(path, Object.values(moreParamsMap), options)
   }
 
