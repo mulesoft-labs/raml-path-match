@@ -1,6 +1,5 @@
-const extend = require('xtend')
 const ramlSanitize = require('raml-sanitize')()
-
+const wp = require('webapi-parser')
 
 /**
  * Expose `ramlPathMatch`.
@@ -52,7 +51,6 @@ function toRegExp (path, paramsMap, keys, options) {
   const strict = options.strict
   let flags = ''
   const used = {}
-
   // Allow case insensitivity.
   if (!options.sensitive) {
     flags += 'i'
@@ -81,23 +79,15 @@ function toRegExp (path, paramsMap, keys, options) {
       // Use the param type and if it doesn't exist, fallback to matching
       // the entire segment.
       const expanded = modifier === '+'
-      /*
+      const paramEl = patchParameter(paramsMap[name], name)
+      const param = extractBasicParamConfig(paramEl)
 
-        TODO:
-          1.Create default param of { type: 'string', required: true }
-            when param is not passed.
-          2. Collect Params instead of Objects in result.used
-
-
-      */
-      const paramConfig = extractBasicParamConfig(paramsMap[name])
-      const param = extend({ type: 'string', required: true }, paramConfig)
       let capture = (
         REGEXP_MATCH[param.type] ||
         (expanded ? '.*?' : '[^' + (prefix || '\\/') + ']+'))
 
       // Cache used parameters.
-      used[name] = param
+      used[name] = paramEl
 
       // Allow support for enum values as the regexp match.
       if (Array.isArray(param.enum)) {
@@ -144,21 +134,20 @@ function toRegExp (path, paramsMap, keys, options) {
  * @param  {Object}   options
  * @return {Function}
  */
-function ramlPathMatch (path, params = [], options = {}) {
-// function ramlPathMatch (path, schema, options) {
+function ramlPathMatch (path, params, options = {}) {
   options = options || {}
-
   // Fast slash support.
   if (path === '/' && options.end === false) {
     return truth
   }
 
+  params = params || []
+
   const paramsMap = Object.fromEntries(
     params.map(p => [p.name.value(), p]))
   const keys = []
   const result = toRegExp(path, paramsMap, keys, options)
-  const usedParams = params.filter(p => !!result.params[p.name.value()])
-  const sanitize = ramlSanitize(usedParams)
+  const sanitize = ramlSanitize(Object.values(result.params))
 
   /**
    * Return a static, reusable function for matching paths.
@@ -180,20 +169,20 @@ function ramlPathMatch (path, params = [], options = {}) {
       const key = keys[i - 1]
       params[key.name] = match[i]
     }
+
     params = sanitize(params)
 
     // If the parameters fail validation, return `false`.
-    const promises = usedParams.map(paramEl => {
-      let val = params[paramEl.name.value()]
-      console.log('>>>', paramEl.name.value(), params)
-      val = typeof val === 'string' ? val : JSON.stringify(val)
-      return paramEl.schema.validate(val).then(report => report.conforms)
-    })
+    const promises = Object.entries(result.params)
+      .map(([name, param]) => {
+        const val = JSON.stringify(params[name]) || ''
+        return param.schema.validate(val)
+          .then(report => report.conforms)
+      })
     const reports = await Promise.all(promises)
     if (reports.includes(false)) {
       return false
     }
-
     return {
       path: path,
       params: params
@@ -250,4 +239,30 @@ function extractBasicParamConfig (param) {
     conf.enum = shape.values.map(val => val.value.value())
   }
   return conf
+}
+
+/**
+ * Patches Parameter by setting default values.
+ *
+ * @param  {webapi-parser.Parameter} param
+ * @param  {String} defaultName
+ * @return {webapi-parser.Parameter}
+ */
+function patchParameter (param, defaultName) {
+  if (!param) {
+    param = new wp.model.domain.Parameter()
+  }
+  if (param.name.option === undefined) {
+    param.withName(defaultName)
+  }
+  if (param.required.option === undefined) {
+    param.withRequired(true)
+  }
+  if (!param.schema) {
+    param.withSchema(new wp.model.domain.ScalarShape())
+  }
+  if (param.schema.dataType.option === undefined) {
+    param.schema.withDataType('http://www.w3.org/2001/XMLSchema#string')
+  }
+  return param
 }
