@@ -130,7 +130,7 @@ function toRegExp (path, paramsMap, keys, options) {
  * Generate the match function based on a route and RAML params object.
  *
  * @param  {String}   path
- * @param  {Array<webapi-parser.Parameter>}   params
+ * @param  {Array.<webapi-parser.Parameter>}   params
  * @param  {Object}   options
  * @return {Function}
  */
@@ -195,7 +195,7 @@ function ramlPathMatch (path, params, options = {}) {
    * Adds more params to match path against.
    * Leaves only params with unique names.
    *
-   * @param  {Array<webapi-parser.Parameter>}   moreParams
+   * @param  {Array.<webapi-parser.Parameter>}   moreParams
    */
   pathMatch.update = function update (moreParams) {
     const moreParamsMap = {
