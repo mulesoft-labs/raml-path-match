@@ -165,19 +165,19 @@ function ramlPathMatch (path, params, options = {}) {
     }
 
     const path = match[0]
-    let params = {}
+    let paramsValues = {}
 
     for (let i = 1; i < match.length; i++) {
       const key = keys[i - 1]
-      params[key.name] = match[i]
+      paramsValues[key.name] = match[i]
     }
 
-    params = sanitize(params)
+    paramsValues = sanitize(paramsValues)
 
     // If the parameters fail validation, return `false`.
     const promises = Object.entries(result.params)
       .map(([name, param]) => {
-        const val = JSON.stringify(params[name]) || ''
+        const val = JSON.stringify(paramsValues[name]) || ''
         return param.schema.validate(val)
           .then(report => report.conforms)
       })
@@ -187,7 +187,7 @@ function ramlPathMatch (path, params, options = {}) {
     }
     return {
       path: path,
-      params: params
+      params: paramsValues
     }
   }
 
