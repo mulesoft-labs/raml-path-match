@@ -158,6 +158,7 @@ function ramlPathMatch (path, params, options = {}) {
    * @return {(Object|Boolean)}
    */
   async function pathMatch (pathname) {
+    await wp.WebApiParser.init()
     const match = result.regexp.exec(pathname)
 
     if (!match) {
