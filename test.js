@@ -2,7 +2,7 @@
 
 const expect = require('chai').expect
 const util = require('util')
-const pathMatch = require('./')
+const ramlPathMatch = require('./')
 const wp = require('webapi-parser')
 const domain = wp.model.domain
 
@@ -551,15 +551,15 @@ describe('raml-path-match', function () {
 
       // Run the test.
       it(description.join(' '), async function () {
-        const test = pathMatch(route, params, options)
-        const result = await test(path)
+        const pathMatch = ramlPathMatch(route, params, options)
+        const result = await pathMatch(path)
         expect(result).to.deep.equal(match)
       })
     })
   })
 
   it('should update path matchers immutably', async function () {
-    const pathMatch1 = pathMatch('/{slug}')
+    const pathMatch1 = ramlPathMatch('/{slug}')
     const pathMatch2 = pathMatch1.update(
       asParams(
         new domain.ScalarShape().withName('slug')

@@ -57,15 +57,14 @@ async function toRegExp (path, paramsMap, keys, options) {
   }
 
   // Replace path parameters and transform into a regexp.
-  const replaces = []
-  const matches = path.matchAll(REGEXP_REPLACE)
+  const replaces = {}
+  const matches = [...path.matchAll(REGEXP_REPLACE)]
 
   let i
   for (i = 0; i < matches.length; i++) {
-    let [prefix, modifier, key, escape] = matches[i]
-
+    let [match, prefix, modifier, key, escape] = matches[i]
     if (escape) {
-      replaces.push('\\' + escape)
+      replaces[match] = '\\' + escape
       continue
     }
 
@@ -102,14 +101,14 @@ async function toRegExp (path, paramsMap, keys, options) {
     }
 
     // Return the regexp as a matching group.
-    replaces.push(
-      prefix + '(' + capture + ')' + (param.required === false ? '?' : ''))
+    replaces[match] = prefix + '(' + capture + ')' +
+      (param.required === false ? '?' : '')
   }
 
-  let routeRe = path
-  replaces.forEach(repl => {
-    routeRe = routeRe.replace(REGEXP_REPLACE, repl)
-  })
+  let routeRe = path.replace(REGEXP_REPLACE, match => replaces[match])
+  // replaces.forEach(repl => {
+  //   routeRe = routeRe.replace(REGEXP_REPLACE, repl)
+  // })
 
   const endsWithSlash = path.endsWith('/')
 
