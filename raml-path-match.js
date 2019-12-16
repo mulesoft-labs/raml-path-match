@@ -46,7 +46,7 @@ const REGEXP_REPLACE = new RegExp([
  * @param  {Object} options
  * @return {RegExp}
  */
-function toRegExp (path, paramsMap, keys, options) {
+async function toRegExp (path, paramsMap, keys, options) {
   const end = options.end !== false
   const strict = options.strict
   let flags = ''
@@ -57,50 +57,59 @@ function toRegExp (path, paramsMap, keys, options) {
   }
 
   // Replace path parameters and transform into a regexp.
-  let route = path.replace(
-    REGEXP_REPLACE,
-    function (match, prefix, modifier, key, escape) {
-      if (escape) {
-        return '\\' + escape
-      }
+  const replaces = []
+  const matches = path.matchAll(REGEXP_REPLACE)
 
-      // Decode URI parameters in variable name.
-      const name = decodeURIComponent(key)
+  let i
+  for (i = 0; i < matches.length; i++) {
+    let [prefix, modifier, key, escape] = matches[i]
 
-      // Push the current key into the keys array.
-      keys.push({
-        name: name,
-        prefix: prefix || '/'
-      })
-
-      // Default the prefix to an empty string for simpler concatination.
-      prefix = prefix ? '\\' + prefix : ''
-
-      // Use the param type and if it doesn't exist, fallback to matching
-      // the entire segment.
-      const expanded = modifier === '+'
-      const paramEl = patchParameter(paramsMap[name], name)
-      const param = extractBasicParamConfig(paramEl)
-
-      let capture = (
-        REGEXP_MATCH[param.type] ||
-        (expanded ? '.*?' : '[^' + (prefix || '\\/') + ']+'))
-
-      // Cache used parameters.
-      used[name] = paramEl
-
-      // Allow support for enum values as the regexp match.
-      if (Array.isArray(param.enum)) {
-        capture = '(?:' + param.enum.map(value => {
-          return String(value).replace(ESCAPE_CHARACTERS, '\\$1')
-        }).join('|') + ')'
-      }
-
-      // Return the regexp as a matching group.
-      return prefix + '(' + capture + ')' +
-        (param.required === false ? '?' : '')
+    if (escape) {
+      replaces.push('\\' + escape)
+      continue
     }
-  )
+
+    // Decode URI parameters in variable name.
+    const name = decodeURIComponent(key)
+
+    // Push the current key into the keys array.
+    keys.push({
+      name: name,
+      prefix: prefix || '/'
+    })
+
+    // Default the prefix to an empty string for simpler concatination.
+    prefix = prefix ? '\\' + prefix : ''
+
+    // Use the param type and if it doesn't exist, fallback to matching
+    // the entire segment.
+    const expanded = modifier === '+'
+    const paramEl = await patchParameter(paramsMap[name], name)
+    const param = extractBasicParamConfig(paramEl)
+
+    let capture = (
+      REGEXP_MATCH[param.type] ||
+      (expanded ? '.*?' : '[^' + (prefix || '\\/') + ']+'))
+
+    // Cache used parameters.
+    used[name] = paramEl
+
+    // Allow support for enum values as the regexp match.
+    if (Array.isArray(param.enum)) {
+      capture = '(?:' + param.enum.map(value => {
+        return String(value).replace(ESCAPE_CHARACTERS, '\\$1')
+      }).join('|') + ')'
+    }
+
+    // Return the regexp as a matching group.
+    replaces.push(
+      prefix + '(' + capture + ')' + (param.required === false ? '?' : ''))
+  }
+
+  let routeRe = path
+  replaces.forEach(repl => {
+    routeRe = routeRe.replace(REGEXP_REPLACE, repl)
+  })
 
   const endsWithSlash = path.endsWith('/')
 
@@ -109,19 +118,19 @@ function toRegExp (path, paramsMap, keys, options) {
   // is valid at the end of a path match, not in the middle. This is important
   // in non-ending mode, where "/test/" shouldn't match "/test//route".
   if (!strict) {
-    route = (endsWithSlash ? route.slice(0, -2) : route) + '(?:\\/(?=$))?'
+    routeRe = (endsWithSlash ? routeRe.slice(0, -2) : routeRe) + '(?:\\/(?=$))?'
   }
 
   if (end) {
-    route += '$'
+    routeRe += '$'
   } else {
     // In non-ending mode, we need the capturing groups to match as much as
     // possible by using a positive lookahead to the end or next path segment.
-    route += strict && endsWithSlash ? '' : '(?=\\/|$)'
+    routeRe += strict && endsWithSlash ? '' : '(?=\\/|$)'
   }
 
   return {
-    regexp: new RegExp('^' + route, flags),
+    regexp: new RegExp('^' + routeRe, flags),
     params: used
   }
 }
@@ -148,8 +157,7 @@ function ramlPathMatch (path, params, options = {}) {
     paramsMap[param.name.value()] = param
   })
   const keys = []
-  const result = toRegExp(path, paramsMap, keys, options)
-  const sanitize = ramlSanitize(Object.values(result.params))
+  const resultProm = toRegExp(path, paramsMap, keys, options)
 
   /**
    * Return a static, reusable function for matching paths.
@@ -158,14 +166,15 @@ function ramlPathMatch (path, params, options = {}) {
    * @return {(Object|Boolean)}
    */
   async function pathMatch (pathname) {
-    await wp.WebApiParser.init()
+    const result = await resultProm
+    const sanitize = ramlSanitize(Object.values(result.params))
     const match = result.regexp.exec(pathname)
 
     if (!match) {
       return false
     }
 
-    const path = match[0]
+    const newPath = match[0]
     let paramsValues = {}
 
     for (let i = 1; i < match.length; i++) {
@@ -187,7 +196,7 @@ function ramlPathMatch (path, params, options = {}) {
       return false
     }
     return {
-      path: path,
+      path: newPath,
       params: paramsValues
     }
   }
@@ -253,7 +262,8 @@ function extractBasicParamConfig (param) {
  * @param  {String} defaultName
  * @return {webapi-parser.Parameter}
  */
-function patchParameter (param, defaultName) {
+async function patchParameter (param, defaultName) {
+  await wp.WebApiParser.init()
   if (!param) {
     param = new wp.model.domain.Parameter()
   }
