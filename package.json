@@ -37,6 +37,6 @@
     "webapi-parser": "^0.4.0"
   },
   "dependencies": {
-    "raml-sanitize": "^1.3.4"
+    "raml-sanitize": "mulesoft-labs/node-raml-sanitize#rework_webapi_parser"
   }
 }
