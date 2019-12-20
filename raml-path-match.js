@@ -58,7 +58,11 @@ async function toRegExp (path, paramsMap, keys, options) {
 
   // Replace path parameters and transform into a regexp.
   const replaces = {}
-  const matches = [...path.matchAll(REGEXP_REPLACE)]
+  const matches = []
+  let mch
+  while ((mch = REGEXP_REPLACE.exec(path)) !== null) {
+    matches.push(mch)
+  }
 
   let i
   for (i = 0; i < matches.length; i++) {
