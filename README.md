@@ -25,7 +25,7 @@ const utils = require('./utils')
 const options = {}
 
 // Array<webapi-parser.Parameter>
-const parameters = utils.getParametersSomehow()
+const parameters = utils.getPathParameters()
 
 // Create a simple path matching instance.
 const pathMatch = ramlPathMatch('/{route}', parameters, options)
