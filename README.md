@@ -18,12 +18,18 @@ npm install raml-path-match --save
 You must require the module and call it as a function with options to get the path matching utility back.
 
 ```javascript
-var pathMatch = require('raml-path-match')({ ... });
+const ramlPathMatch = require('raml-path-match')
+
+// Initialization Options
+const options = {}
+
+// Array<webapi-parser.Parameter>
+const parameters = getParametersSomehow()
 
 // Create a simple path matching instance.
-var match = patchMatch('/{route}', { route: { type: 'string' } });
+const pathMatch = ramlPathMatch('/{route}', parameters, options)
 
-match('/test'); //=> { match: '/test', params: { route: 'test' } }
+pathMatch('/test'); //=> { match: '/test', params: { route: 'test' } }
 ```
 
 ### Initialization Options
@@ -31,7 +37,6 @@ match('/test'); //=> { match: '/test', params: { route: 'test' } }
 * **end** - When set to `false`, the route will only match the beginning of paths.
 * **strict** - When set to `true`, the route must match exactly without trailing slash.
 * **sensitive** - When set to `true`, the route will be case-sensitive.
-* **RAMLVersion** - The RAML version passed to [raml-validate](https://github.com/mulesoft/node-raml-validate) (default: `'RAML08'`)
 
 ### Routes
 
@@ -39,20 +44,11 @@ The route is a string that can be interpolated with parameters. E.g. `/{route}`.
 
 ### Parameters
 
-Parameters in the route string can be defined by passing in an object definition adhering to the [RAML spec](https://github.com/raml-org/raml-spec/blob/master/raml-0.8.md#named-parameters). For example, to specify that `{route}` is a integer greater than `5` we would pass in:
-
-```javascript
-pathMatch('/{route}', {
-  route: {
-    type: 'integer',
-    minimum: 6
-  }
-}); //=> [Function]
-```
+Parameters in the route string must be defined as an array of [webapi-parser](https://github.com/raml-org/webapi-parser) `Parameter` objects.
 
 #### Optional parameters
 
-Parameters can be optional according to the [RAML spec](https://github.com/raml-org/raml-spec/blob/master/raml-0.8.md#required). To set the parameter to be optional, you must set `required: false`. With this option set, `/{route}` will match just `/`. When the parameter is optional and not matched, the parameter value will be set to `undefined`.
+Parameters can be optional according to the [RAML spec](https://github.com/raml-org/raml-spec/blob/master/raml-0.8.md#required). With optional parameters, `/{route}` will match just `/`. When the parameter is optional and not matched, the parameter value will be set to `undefined`.
 
 ### Matching the path
 
@@ -69,9 +65,9 @@ The path matching instance will return a function after you give it the route te
 
 The above is an example of passing the path `/123` to the result of the previous example. Notice that parameters will be automatically sanitized to the native JavaScript types.
 
-### Immutable Updates
+### Updates
 
-You can merge more parameters into the path after creation using `pathMatch.update(params)`. It'll return a new function, or reuse the current function if there's no functional difference with the new parameters.
+You can merge more parameters into the path after creation using `pathMatch.update(params)`. It'll return a new patch matching function.
 
 ## License
 
