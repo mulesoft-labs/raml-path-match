@@ -19,12 +19,13 @@ You must require the module and call it as a function with options to get the pa
 
 ```javascript
 const ramlPathMatch = require('raml-path-match')
+const utils = require('./utils')
 
 // Initialization Options
 const options = {}
 
 // Array<webapi-parser.Parameter>
-const parameters = getParametersSomehow()
+const parameters = utils.getParametersSomehow()
 
 // Create a simple path matching instance.
 const pathMatch = ramlPathMatch('/{route}', parameters, options)
