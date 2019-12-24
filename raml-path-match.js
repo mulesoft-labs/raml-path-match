@@ -190,9 +190,16 @@ function ramlPathMatch (path, params, options = {}) {
     // If the parameters fail validation, return `false`.
     const promises = Object.entries(result.params)
       .map(([name, param]) => {
-        const val = JSON.stringify(paramsValues[name]) || ''
-        return param.schema.validate(val)
-          .then(report => report.conforms)
+        let prom
+        if (param.schema) {
+          prom = param.schema.validate(
+            JSON.stringify(paramsValues[name]) || '')
+        } else {
+          /* Params without schema are considered to be required strings.
+          Thus perform simple validation of value presence. */
+          prom = Promise.resolve({ conforms: !!paramsValues[name] })
+        }
+        return prom.then(report => report.conforms)
       })
     const reports = await Promise.all(promises)
     if (reports.includes(false)) {
@@ -242,17 +249,19 @@ function extractBasicParamConfig (param) {
   if (!param) {
     return {}
   }
-  const shape = param.schema
   const conf = {
     required: param.required.value() || false
   }
   if (conf.required === undefined) {
     conf.required = true
   }
-  if (shape.dataType !== undefined) {
-    conf.type = shape.dataType.value().split('#').pop()
-  }
-  if (shape.values && shape.values.length > 0) {
+  const shape = param.schema
+  // Params without schema are considered to be strings
+  const dt = shape && shape.dataType !== undefined
+    ? shape.dataType.value()
+    : 'http://www.w3.org/2001/XMLSchema#string'
+  conf.type = dt.split('#').pop()
+  if (shape && shape.values && shape.values.length > 0) {
     conf.enum = shape.values.map(val => val.value.value())
   }
   return conf
@@ -266,7 +275,6 @@ function extractBasicParamConfig (param) {
  * @return {webapi-parser.Parameter}
  */
 async function patchParameter (param, defaultName) {
-  await wp.WebApiParser.init()
   if (!param) {
     param = new wp.model.domain.Parameter()
   }
@@ -275,12 +283,6 @@ async function patchParameter (param, defaultName) {
   }
   if (param.required.option === undefined) {
     param.withRequired(true)
-  }
-  if (!param.schema) {
-    param.withSchema(new wp.model.domain.ScalarShape())
-  }
-  if (param.schema.dataType.option === undefined) {
-    param.schema.withDataType('http://www.w3.org/2001/XMLSchema#string')
   }
   return param
 }
