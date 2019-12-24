@@ -576,4 +576,32 @@ describe('raml-path-match', function () {
     expect(match2).to.equal(false)
     expect(match3).to.deep.equal({ path: '/valid', params: { slug: 'valid' } })
   })
+  it('should treat params with missing schema as strings', async function () {
+    const pathMatch = ramlPathMatch('/{slug}', [
+      new domain.Parameter()
+        .withName('slug')
+        .withRequired(true)
+    ])
+    const match1 = await pathMatch('/test')
+    const match3 = await pathMatch('/')
+    expect(match1).to.deep.equal({ path: '/test', params: { slug: 'test' } })
+    expect(match3).to.equal(false)
+  })
+  it('should make params required by default', async function () {
+    const pathMatch = ramlPathMatch('/{slug}', [
+      new domain.Parameter()
+        .withName('slug')
+    ])
+    const match1 = await pathMatch('/test')
+    const match3 = await pathMatch('/')
+    expect(match1).to.deep.equal({ path: '/test', params: { slug: 'test' } })
+    expect(match3).to.equal(false)
+  })
+  it('should use default name when missing', async function () {
+    const pathMatch = ramlPathMatch('/{slug}', [
+      new domain.Parameter()
+    ])
+    const match1 = await pathMatch('/test')
+    expect(match1).to.deep.equal({ path: '/test', params: { slug: 'test' } })
+  })
 })
