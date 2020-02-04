@@ -1,5 +1,16 @@
 const ramlSanitize = require('raml-sanitize')()
 const wp = require('webapi-parser')
+const Ajv = require('ajv')
+
+const ajv = new Ajv({
+  schemaId: 'auto',
+  allErrors: true,
+  verbose: true,
+  jsonPointers: true,
+  errorDataPath: 'property',
+  unknownFormats: 'ignore' // pass validation for unknown formats
+})
+ajv.addMetaSchema(require('ajv/lib/refs/json-schema-draft-04.json'))
 
 /**
  * Expose `ramlPathMatch`.
@@ -168,7 +179,7 @@ function ramlPathMatch (path, params, options = {}) {
    * @param  {String}           pathname
    * @return {(Object|Boolean)}
    */
-  async function pathMatch (pathname) {
+  function pathMatch (pathname) {
     const sanitize = ramlSanitize(Object.values(result.params))
     const match = result.regexp.exec(pathname)
 
@@ -187,20 +198,20 @@ function ramlPathMatch (path, params, options = {}) {
     paramsValues = sanitize(paramsValues)
 
     // If the parameters fail validation, return `false`.
-    const promises = Object.entries(result.params)
+    const reports = Object.entries(result.params)
       .map(([name, param]) => {
-        let prom
         if (param.schema) {
-          prom = param.schema.validate(
-            JSON.stringify(paramsValues[name]) || '')
-        } else {
-          /* Params without schema are considered to be required strings.
-          Thus perform simple validation of value presence. */
-          prom = Promise.resolve({ conforms: !!paramsValues[name] })
+          const sch = JSON.parse(param.schema.toJsonSchema)
+          let value = paramsValues[name]
+          if (value === undefined) {
+            value = ''
+          }
+          return ajv.validate(sch, value)
         }
-        return prom.then(report => report.conforms)
+        /* Params without schema are considered to be required strings.
+        Thus perform simple validation of value presence. */
+        return !!paramsValues[name]
       })
-    const reports = await Promise.all(promises)
     if (reports.includes(false)) {
       return false
     }

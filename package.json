@@ -37,6 +37,7 @@
     "webapi-parser": "^0.4.0"
   },
   "dependencies": {
+    "ajv": "^6.11.0",
     "raml-sanitize": "^1.3.4"
   }
 }

@@ -550,15 +550,15 @@ describe('raml-path-match', function () {
       }
 
       // Run the test.
-      it(description.join(' '), async function () {
+      it(description.join(' '), function () {
         const pathMatch = ramlPathMatch(route, params, options)
-        const result = await pathMatch(path)
+        const result = pathMatch(path)
         expect(result).to.deep.equal(match)
       })
     })
   })
 
-  it('should update path matchers immutably', async function () {
+  it('should update path matchers immutably', function () {
     const pathMatch1 = ramlPathMatch('/{slug}')
     const pathMatch2 = pathMatch1.update(
       asParams(
@@ -568,40 +568,40 @@ describe('raml-path-match', function () {
         true, 'slug')
     )
 
-    const match1 = await pathMatch1('/test')
-    const match2 = await pathMatch2('/invalid')
-    const match3 = await pathMatch2('/valid')
+    const match1 = pathMatch1('/test')
+    const match2 = pathMatch2('/invalid')
+    const match3 = pathMatch2('/valid')
 
     expect(match1).to.deep.equal({ path: '/test', params: { slug: 'test' } })
     expect(match2).to.equal(false)
     expect(match3).to.deep.equal({ path: '/valid', params: { slug: 'valid' } })
   })
-  it('should treat params with missing schema as strings', async function () {
+  it('should treat params with missing schema as strings', function () {
     const pathMatch = ramlPathMatch('/{slug}', [
       new domain.Parameter()
         .withName('slug')
         .withRequired(true)
     ])
-    const match1 = await pathMatch('/test')
-    const match3 = await pathMatch('/')
+    const match1 = pathMatch('/test')
+    const match3 = pathMatch('/')
     expect(match1).to.deep.equal({ path: '/test', params: { slug: 'test' } })
     expect(match3).to.equal(false)
   })
-  it('should make params required by default', async function () {
+  it('should make params required by default', function () {
     const pathMatch = ramlPathMatch('/{slug}', [
       new domain.Parameter()
         .withName('slug')
     ])
-    const match1 = await pathMatch('/test')
-    const match3 = await pathMatch('/')
+    const match1 = pathMatch('/test')
+    const match3 = pathMatch('/')
     expect(match1).to.deep.equal({ path: '/test', params: { slug: 'test' } })
     expect(match3).to.equal(false)
   })
-  it('should use default name when missing', async function () {
+  it('should use default name when missing', function () {
     const pathMatch = ramlPathMatch('/{slug}', [
       new domain.Parameter()
     ])
-    const match1 = await pathMatch('/test')
+    const match1 = pathMatch('/test')
     expect(match1).to.deep.equal({ path: '/test', params: { slug: 'test' } })
   })
 })
