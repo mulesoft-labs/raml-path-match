@@ -46,7 +46,7 @@ const REGEXP_REPLACE = new RegExp([
  * @param  {Object} options
  * @return {RegExp}
  */
-async function toRegExp (path, paramsMap, keys, options) {
+function toRegExp (path, paramsMap, keys, options) {
   const end = options.end !== false
   const strict = options.strict
   let flags = ''
@@ -87,7 +87,7 @@ async function toRegExp (path, paramsMap, keys, options) {
     // Use the param type and if it doesn't exist, fallback to matching
     // the entire segment.
     const expanded = modifier === '+'
-    const paramEl = await patchParameter(paramsMap[name], name)
+    const paramEl = patchParameter(paramsMap[name], name)
     const param = extractBasicParamConfig(paramEl)
 
     let capture = (
@@ -160,7 +160,7 @@ function ramlPathMatch (path, params, options = {}) {
     paramsMap[param.name.value()] = param
   })
   const keys = []
-  const resultProm = toRegExp(path, paramsMap, keys, options)
+  const result = toRegExp(path, paramsMap, keys, options)
 
   /**
    * Return a static, reusable function for matching paths.
@@ -169,7 +169,6 @@ function ramlPathMatch (path, params, options = {}) {
    * @return {(Object|Boolean)}
    */
   async function pathMatch (pathname) {
-    const result = await resultProm
     const sanitize = ramlSanitize(Object.values(result.params))
     const match = result.regexp.exec(pathname)
 
@@ -274,7 +273,7 @@ function extractBasicParamConfig (param) {
  * @param  {String} defaultName
  * @return {webapi-parser.Parameter}
  */
-async function patchParameter (param, defaultName) {
+function patchParameter (param, defaultName) {
   if (!param) {
     param = new wp.model.domain.Parameter()
   }
