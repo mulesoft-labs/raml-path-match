@@ -31,10 +31,10 @@
   "homepage": "https://github.com/mulesoft-labs/raml-path-match",
   "devDependencies": {
     "chai": "^4.1.2",
-    "mocha": "^6.2.2",
-    "nyc": "^14.1.1",
+    "mocha": "^7.1.0",
+    "nyc": "^15.0.0",
     "standard": "^14.3.1",
-    "webapi-parser": "^0.4.1"
+    "webapi-parser": "^0.5.0"
   },
   "dependencies": {
     "ajv": "^6.11.0",
