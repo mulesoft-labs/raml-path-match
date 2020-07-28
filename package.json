@@ -38,6 +38,6 @@
   },
   "dependencies": {
     "ajv": "^6.12.3",
-    "raml-sanitize": "^1.4.0"
+    "raml-sanitize": "^2.0.0"
   }
 }
